@@ -5,7 +5,7 @@ import Engine
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
-SQ_SIZE = HEIGHT / DIMENSION
+SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
 
@@ -24,10 +24,27 @@ def main():
     #load images only once
     loadImages()
     running = True
+    selectedSquare = () # tracks last move
+    playerClicks = [] # count mouseclicks
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            if e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos() # x,y
+                col = location[0] // SQ_SIZE
+                row = location[1] // SQ_SIZE
+                if selectedSquare == (row, col):
+                    selectedSquare = () # undoes the move in progress
+                else: 
+                    selectedSquare = (row,col)
+                    playerClicks.append(selectedSquare) # counts mouseclick
+                if len(playerClicks) == 2:
+                    move = Engine.Move(playerClicks[0],playerClicks[1], gameState.board)
+                    print(move.getChessNotation())
+                    gameState.makeMove(move)
+                    selectedSquare = ()
+                    playerClicks = []
         clock.tick(MAX_FPS)
         p.display.flip()
         drawGameState(screen, gameState)
