@@ -16,11 +16,19 @@ class GameState():
         self.whiteToMove = True
         self.moveLog = []
 
+    # moves pieces on board except casteling, en-passant and pawn capture
     def makeMove(self, move):
         self.board[move.startSquare[0]][move.startSquare[1]] = "--"
         self.board[move.endSquare[0]][move.endSquare[1]] = move.pieceMoved
         self.moveLog.append(move) # log to be able to undo moves
         self.whiteToMove = not self.whiteToMove # players take turns
+
+    def undoMove(self):
+        if len(self.moveLog)>0:
+            move = self.moveLog.pop()
+            self.board[move.startSquare[0]][move.startSquare[1]] = move.pieceMoved
+            self.board[move.endSquare[0]][move.endSquare[1]] = move.pieceCaptured
+            self.whiteToMove = not self.whiteToMove
 
 class Move():
     # dictionaries for mapping the propper notation

@@ -30,6 +30,7 @@ def main():
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            # mouse handler
             if e.type == p.MOUSEBUTTONDOWN:
                 location = p.mouse.get_pos() # x,y
                 col = location[0] // SQ_SIZE
@@ -45,6 +46,10 @@ def main():
                     gameState.makeMove(move)
                     selectedSquare = ()
                     playerClicks = []
+            # key handler
+            elif e.type == p.KEYDOWN:
+                if e.key == p.K_r:
+                    gameState.undoMove()
         clock.tick(MAX_FPS)
         p.display.flip()
         drawGameState(screen, gameState)
