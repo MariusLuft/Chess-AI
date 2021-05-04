@@ -9,12 +9,13 @@ class GameState():
             ["--","--", "--", "--", "--", "--","--", "--"],
             ["--","--", "--", "--", "--", "--","--", "--"],
             ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "wN"],
             ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
             ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
         ]
         self.whiteToMove = True
         self.moveLog = []
+        self.moveFunctions = {'P': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getNightMoves, 'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
 
     # moves pieces on board except casteling, en-passant and pawn capture
     def makeMove(self, move):
@@ -30,6 +31,277 @@ class GameState():
             self.board[move.endSquare[0]][move.endSquare[1]] = move.pieceCaptured
             self.whiteToMove = not self.whiteToMove
 
+    # possible moves considering check
+    def getValidMoves(self):
+        return self.getPossibleMoves()
+
+    # possible moves without considering check
+    def getPossibleMoves(self):
+        moves = []
+        for r in range(len(self.board)):
+            for c in range(len(self.board[r])):
+                player = self.board[r][c][0]
+                if (player == 'w' and self.whiteToMove) or (player == 'b' and not self.whiteToMove):
+                    piece = self.board[r][c][1]                    
+                    self.moveFunctions[piece](r,c,moves) # calls appropriate move function
+        return moves
+            
+    # generates possible moves for Pawns
+    def getPawnMoves(self, r, c, moves):
+        if self.whiteToMove: # whites turn
+            if self.board[r-1][c] == "--": # pawn moves 1 field
+                moves.append(Move((r,c), (r-1,c), self.board))
+                if r == 6 and self.board[r-2][c] == "--": # pawn moves 2 fields
+                    moves.append(Move((r,c), (r-2,c), self.board))
+            if c+1 <= 7:
+                if self.board[r-1][c + 1][0] == 'b': # enemy piece
+                    moves.append(Move((r,c), (r-1,c +1), self.board))
+            if c-1 >= 0:
+                if self.board[r-1][c - 1][0] == 'b': # enemy piece
+                    moves.append(Move((r,c), (r-1,c -1), self.board))
+        else: # blacks turn
+            if self.board[r+1][c] == "--": # pawn moves 1 field
+                moves.append(Move((r,c), (r+1,c), self.board))
+                if r == 1 and self.board[r+2][c] == "--": # pawn moves 2 fields
+                    moves.append(Move((r,c), (r+2,c), self.board))
+            if c+1 <= 7:
+                if self.board[r+1][c + 1][0] == 'w': # enemy piece
+                    moves.append(Move((r,c), (r+1,c +1), self.board))
+            if c-1 >= 0:
+                if self.board[r+1][c - 1][0] == 'w': # enemy piece
+                    moves.append(Move((r,c), (r+1,c -1), self.board))
+
+    # generates possible moves for Rooks
+    def getRookMoves(self, r, c, moves):
+        if self.whiteToMove: # whites turn
+            # move upwards
+            for fields in range(1, r + 1):
+                if self.board[r-fields][c] == "--":
+                    moves.append(Move((r,c), (r-fields,c), self.board))
+                else:
+                    if self.board[r-fields][c][0] == 'b':
+                        moves.append(Move((r,c), (r-fields,c), self.board))
+                        break
+                    break
+            # move right
+            for fields in range(1, 8 - c):
+                if self.board[r][c+fields] == "--":
+                    moves.append(Move((r,c), (r,c+fields), self.board))
+                else:
+                    if self.board[r][c+fields][0] == 'b':
+                        moves.append(Move((r,c), (r,c+fields), self.board))
+                        break
+                    break
+            # move left
+            for fields in range(1, c + 1):
+                if self.board[r][c-fields] == "--":
+                    moves.append(Move((r,c), (r,c-fields), self.board))
+                else:
+                    if self.board[r][c-fields][0] == 'b':
+                        moves.append(Move((r,c), (r,c-fields), self.board))
+                        break
+                    break
+             # move down
+            for fields in range(1, 8 - r):
+                if self.board[r + fields][c] == "--":
+                    moves.append(Move((r,c), (r+fields,c), self.board))
+                else:
+                    if self.board[r + fields][c][0] == 'b':
+                        moves.append(Move((r,c), (r+fields,c), self.board))
+                        break
+                    break
+        else: # blacks turn
+            # move upwards
+            for fields in range(1, r + 1):
+                if self.board[r-fields][c] == "--":
+                    moves.append(Move((r,c), (r-fields,c), self.board))
+                else:
+                    if self.board[r-fields][c][0] == 'w':
+                        moves.append(Move((r,c), (r-fields,c), self.board))
+                        break
+                    break
+            # move right
+            for fields in range(1, 8 - c):
+                if self.board[r][c+fields] == "--":
+                    moves.append(Move((r,c), (r,c+fields), self.board))
+                else:
+                    if self.board[r][c+fields][0] == 'w':
+                        moves.append(Move((r,c), (r,c+fields), self.board))
+                        break
+                    break
+            # move left
+            for fields in range(1, c + 1):
+                if self.board[r][c-fields] == "--":
+                    moves.append(Move((r,c), (r,c-fields), self.board))
+                else:
+                    if self.board[r][c-fields][0] == 'w':
+                        moves.append(Move((r,c), (r,c-fields), self.board))
+                        break
+                    break
+             # move down
+            for fields in range(1, 8 - r):
+                if self.board[r + fields][c] == "--":
+                    moves.append(Move((r,c), (r+fields,c), self.board))
+                else:
+                    if self.board[r + fields][c][0] == 'w':
+                        moves.append(Move((r,c), (r+fields,c), self.board))
+                        break
+                    break
+
+    # generates possible moves for Nights
+    def getNightMoves(self, r, c, moves):
+        pass
+
+    # generates possible moves for Bishops
+    def getBishopMoves(self, r, c, moves):
+        if self.whiteToMove: # whites turn
+            # move diagonally up right
+            for fields in range(1, min(r + 1, 8 - c)):
+                if self.board[r-fields][c + fields] == "--":
+                    moves.append(Move((r,c), (r-fields,c+ fields), self.board))
+                else:
+                    if self.board[r-fields][c + fields][0] == 'b':
+                        moves.append(Move((r,c), (r-fields,c+ fields), self.board))
+                        break
+                    break
+            # move diagonally up left
+            for fields in range(1, min(r + 1, c + 1)):
+                if self.board[r-fields][c - fields] == "--":
+                    moves.append(Move((r,c), (r-fields,c- fields), self.board))
+                else:
+                    if self.board[r-fields][c - fields][0] == 'b':
+                        moves.append(Move((r,c), (r-fields,c- fields), self.board))
+                        break
+                    break
+            # move diagonally down right
+            for fields in range(1, min(8 - r, 8 - c)):
+                if self.board[r+fields][c + fields] == "--":
+                    moves.append(Move((r,c), (r+fields,c+ fields), self.board))
+                else:
+                    if self.board[r+fields][c + fields][0] == 'b':
+                        moves.append(Move((r,c), (r+fields,c+ fields), self.board))
+                        break
+                    break
+            # move diagonally down left
+            for fields in range(1, min(8 - r, c + 1)):
+                if self.board[r+fields][c - fields] == "--":
+                    moves.append(Move((r,c), (r+fields,c- fields), self.board))
+                else:
+                    if self.board[r+fields][c - fields][0] == 'b':
+                        moves.append(Move((r,c), (r+fields,c- fields), self.board))
+                        break
+                    break
+        else: 
+             # move diagonally up right
+            for fields in range(1, min(r + 1, 8 - c)):
+                if self.board[r-fields][c + fields] == "--":
+                    moves.append(Move((r,c), (r-fields,c+ fields), self.board))
+                else:
+                    if self.board[r-fields][c + fields][0] == 'w':
+                        moves.append(Move((r,c), (r-fields,c+ fields), self.board))
+                        break
+                    break
+            # move diagonally up left
+            for fields in range(1, min(r + 1, c + 1)):
+                if self.board[r-fields][c - fields] == "--":
+                    moves.append(Move((r,c), (r-fields,c- fields), self.board))
+                else:
+                    if self.board[r-fields][c - fields][0] == 'w':
+                        moves.append(Move((r,c), (r-fields,c- fields), self.board))
+                        break
+                    break
+            # move diagonally down right
+            for fields in range(1, min(8 - r, 8 - c)):
+                if self.board[r+fields][c + fields] == "--":
+                    moves.append(Move((r,c), (r+fields,c+ fields), self.board))
+                else:
+                    if self.board[r+fields][c + fields][0] == 'w':
+                        moves.append(Move((r,c), (r+fields,c+ fields), self.board))
+                        break
+                    break
+            # move diagonally down left
+            for fields in range(1, min(8 - r, c + 1)):
+                if self.board[r+fields][c - fields] == "--":
+                    moves.append(Move((r,c), (r+fields,c- fields), self.board))
+                else:
+                    if self.board[r+fields][c - fields][0] == 'w':
+                        moves.append(Move((r,c), (r+fields,c- fields), self.board))
+                        break
+                    break
+
+    # generates possible moves for Queens
+    def getQueenMoves(self, r, c, moves):
+        pass
+
+    # generates possible moves for Kings
+    def getKingMoves(self, r, c, moves):
+        if self.whiteToMove: # whites turn
+            # move upwards            
+            if r-1>=0:
+                if self.board[r-1][c] == "--" or self.board[r-1][c][0] == 'b':
+                    moves.append(Move((r,c), (r-1,c), self.board))    
+            # move down            
+            if r+1<=7:
+                if self.board[r+1][c] == "--" or self.board[r+1][c][0] == 'b':
+                    moves.append(Move((r,c), (r+1,c), self.board))    
+            # move left            
+            if c-1>=0:
+                if self.board[r][c-1] == "--" or self.board[r][c-1][0] == 'b':
+                    moves.append(Move((r,c), (r,c-1), self.board))
+              # move right            
+            if c+1<=7:
+                if self.board[r][c+1] == "--" or self.board[r][c+1][0] == 'b':
+                    moves.append(Move((r,c), (r,c+1), self.board))
+            # move diagonally up right
+            if r-1>=0 and c+1<=7:
+                if self.board[r-1][c +1] == "--" or self.board[r-1][c +1][0] == 'b':
+                    moves.append(Move((r,c), (r-1,c+1), self.board))
+                    # move diagonally up left
+            if r-1>=0 and c-1>=0:
+                if self.board[r-1][c -1] == "--" or self.board[r-1][c -1][0] == 'b':
+                    moves.append(Move((r,c), (r-1,c-1), self.board))
+                    # move diagonally down right
+            if r+1<=7 and c+1<=7:
+                if self.board[r+1][c +1] == "--" or self.board[r+1][c +1][0] == 'b':
+                    moves.append(Move((r,c), (r+1,c+1), self.board))
+                    # move diagonally down left
+            if r+1<=7 and c-1>=0:
+                if self.board[r+1][c -1] == "--" or self.board[r+1][c -1][0] == 'b':
+                    moves.append(Move((r,c), (r+1,c-1), self.board))
+        else: # blacks turn
+               # move upwards            
+            if r-1>=0:
+                if self.board[r-1][c] == "--" or self.board[r-1][c][0] == 'w':
+                    moves.append(Move((r,c), (r-1,c), self.board))    
+            # move down            
+            if r+1<=7:
+                if self.board[r+1][c] == "--" or self.board[r+1][c][0] == 'w':
+                    moves.append(Move((r,c), (r+1,c), self.board))    
+            # move left            
+            if c-1>=0:
+                if self.board[r][c-1] == "--" or self.board[r][c-1][0] == 'w':
+                    moves.append(Move((r,c), (r,c-1), self.board))
+              # move right            
+            if c+1<=7:
+                if self.board[r][c+1] == "--" or self.board[r][c+1][0] == 'w':
+                    moves.append(Move((r,c), (r,c+1), self.board))
+            # move diagonally up right
+            if r-1>=0 and c+1<=7:
+                if self.board[r-1][c +1] == "--" or self.board[r-1][c +1][0] == 'w':
+                    moves.append(Move((r,c), (r-1,c+1), self.board))
+                    # move diagonally up left
+            if r-1>=0 and c-1>=0:
+                if self.board[r-1][c -1] == "--" or self.board[r-1][c -1][0] == 'w':
+                    moves.append(Move((r,c), (r-1,c-1), self.board))
+                    # move diagonally down right
+            if r+1<=7 and c+1<=7:
+                if self.board[r+1][c +1] == "--" or self.board[r+1][c +1][0] == 'w':
+                    moves.append(Move((r,c), (r+1,c+1), self.board))
+                    # move diagonally down left
+            if r+1<=7 and c-1>=0:
+                if self.board[r+1][c -1] == "--" or self.board[r+1][c -1][0] == 'w':
+                    moves.append(Move((r,c), (r+1,c-1), self.board))
+
 class Move():
     # dictionaries for mapping the propper notation
     rankToRows = {"1": 7, "2": 6, "3": 5,"4": 4, "5": 3, "6": 2, "7": 1, "8": 0}
@@ -42,6 +314,13 @@ class Move():
         self.pieceCaptured = board[endSq[0]][endSq[1]]
         self.startSquare = startSq
         self.endSquare = endSq
+        self.moveID = self.startSquare[0]*1000 + self.startSquare[1]*100 + self.endSquare[0]*10 + self.endSquare[1]
+
+    # overriding the equals function
+    def __eq__(self, other):
+        if isinstance(other, Move):
+            return self.moveID == other.moveID
+        return False
 
     def getChessNotation(self):
         return self.getRankFile(self.startSquare[0], self.startSquare[1]) +  self.getRankFile(self.endSquare[0], self.endSquare[1])

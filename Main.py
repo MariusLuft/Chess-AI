@@ -21,6 +21,8 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gameState = Engine.GameState()
+    moveMade = False
+    validMoves = gameState.getValidMoves()
     #load images only once
     loadImages()
     running = True
@@ -37,19 +39,26 @@ def main():
                 row = location[1] // SQ_SIZE
                 if selectedSquare == (row, col):
                     selectedSquare = () # undoes the move in progress
+                    playerClicks.pop()
                 else: 
                     selectedSquare = (row,col)
                     playerClicks.append(selectedSquare) # counts mouseclick
                 if len(playerClicks) == 2:
                     move = Engine.Move(playerClicks[0],playerClicks[1], gameState.board)
-                    print(move.getChessNotation())
-                    gameState.makeMove(move)
+                    if move in validMoves:
+                        print(move.getChessNotation())
+                        gameState.makeMove(move)
+                        moveMade = True
                     selectedSquare = ()
                     playerClicks = []
             # key handler
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_r:
                     gameState.undoMove()
+                    moveMade = True
+        if moveMade:
+            validMoves = gameState.getValidMoves()
+            moveMade = False
         clock.tick(MAX_FPS)
         p.display.flip()
         drawGameState(screen, gameState)
