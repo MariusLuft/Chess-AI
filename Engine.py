@@ -9,7 +9,7 @@ class GameState():
             ["--","--", "--", "--", "--", "--","--", "--"],
             ["--","--", "--", "--", "--", "--","--", "--"],
             ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "wN"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
             ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
             ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
         ]
@@ -231,7 +231,8 @@ class GameState():
 
     # generates possible moves for Queens
     def getQueenMoves(self, r, c, moves):
-        pass
+        self.getBishopMoves(r, c, moves)
+        self.getRookMoves(r, c, moves)
 
     # generates possible moves for Kings
     def getKingMoves(self, r, c, moves):
