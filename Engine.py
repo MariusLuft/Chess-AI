@@ -73,162 +73,96 @@ class GameState():
 
     # generates possible moves for Rooks
     def getRookMoves(self, r, c, moves):
-        if self.whiteToMove: # whites turn
-            # move upwards
-            for fields in range(1, r + 1):
-                if self.board[r-fields][c] == "--":
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        # move upwards
+        for fields in range(1, r + 1):
+            if self.board[r-fields][c] == "--":
+                moves.append(Move((r,c), (r-fields,c), self.board))
+            else:
+                if self.board[r-fields][c][0] == enemyColor:
                     moves.append(Move((r,c), (r-fields,c), self.board))
-                else:
-                    if self.board[r-fields][c][0] == 'b':
-                        moves.append(Move((r,c), (r-fields,c), self.board))
-                        break
                     break
-            # move right
-            for fields in range(1, 8 - c):
-                if self.board[r][c+fields] == "--":
+                break
+        # move right
+        for fields in range(1, 8 - c):
+            if self.board[r][c+fields] == "--":
+                moves.append(Move((r,c), (r,c+fields), self.board))
+            else:
+                if self.board[r][c+fields][0] == enemyColor:
                     moves.append(Move((r,c), (r,c+fields), self.board))
-                else:
-                    if self.board[r][c+fields][0] == 'b':
-                        moves.append(Move((r,c), (r,c+fields), self.board))
-                        break
                     break
-            # move left
-            for fields in range(1, c + 1):
-                if self.board[r][c-fields] == "--":
+                break
+        # move left
+        for fields in range(1, c + 1):
+            if self.board[r][c-fields] == "--":
+                moves.append(Move((r,c), (r,c-fields), self.board))
+            else:
+                if self.board[r][c-fields][0] == enemyColor:
                     moves.append(Move((r,c), (r,c-fields), self.board))
-                else:
-                    if self.board[r][c-fields][0] == 'b':
-                        moves.append(Move((r,c), (r,c-fields), self.board))
-                        break
                     break
-             # move down
-            for fields in range(1, 8 - r):
-                if self.board[r + fields][c] == "--":
+                break
+            # move down
+        for fields in range(1, 8 - r):
+            if self.board[r + fields][c] == "--":
+                moves.append(Move((r,c), (r+fields,c), self.board))
+            else:
+                if self.board[r + fields][c][0] == enemyColor:
                     moves.append(Move((r,c), (r+fields,c), self.board))
-                else:
-                    if self.board[r + fields][c][0] == 'b':
-                        moves.append(Move((r,c), (r+fields,c), self.board))
-                        break
                     break
-        else: # blacks turn
-            # move upwards
-            for fields in range(1, r + 1):
-                if self.board[r-fields][c] == "--":
-                    moves.append(Move((r,c), (r-fields,c), self.board))
-                else:
-                    if self.board[r-fields][c][0] == 'w':
-                        moves.append(Move((r,c), (r-fields,c), self.board))
-                        break
-                    break
-            # move right
-            for fields in range(1, 8 - c):
-                if self.board[r][c+fields] == "--":
-                    moves.append(Move((r,c), (r,c+fields), self.board))
-                else:
-                    if self.board[r][c+fields][0] == 'w':
-                        moves.append(Move((r,c), (r,c+fields), self.board))
-                        break
-                    break
-            # move left
-            for fields in range(1, c + 1):
-                if self.board[r][c-fields] == "--":
-                    moves.append(Move((r,c), (r,c-fields), self.board))
-                else:
-                    if self.board[r][c-fields][0] == 'w':
-                        moves.append(Move((r,c), (r,c-fields), self.board))
-                        break
-                    break
-             # move down
-            for fields in range(1, 8 - r):
-                if self.board[r + fields][c] == "--":
-                    moves.append(Move((r,c), (r+fields,c), self.board))
-                else:
-                    if self.board[r + fields][c][0] == 'w':
-                        moves.append(Move((r,c), (r+fields,c), self.board))
-                        break
-                    break
+                break
 
     # generates possible moves for Nights
     def getNightMoves(self, r, c, moves):
-        pass
+        allyColor = 'w' if self.whiteToMove else 'b'
+        knightMoves = ((-2,1),(2,-1), (2,1),(-2,-1), (1,2), (-1,2), (-1,-2), (1,-2)) 
+        for move in knightMoves:
+            endrow = r + move[0]
+            endcol = c + move[1]
+            if 0 <= endrow < 8 and 0 <= endcol < 8:
+                endpiece = self.board[endrow][endcol]
+                if endpiece[0] != allyColor:
+                    moves.append(Move((r,c), (endrow,endcol), self.board))
 
     # generates possible moves for Bishops
     def getBishopMoves(self, r, c, moves):
-        if self.whiteToMove: # whites turn
-            # move diagonally up right
-            for fields in range(1, min(r + 1, 8 - c)):
-                if self.board[r-fields][c + fields] == "--":
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        # move diagonally up right
+        for fields in range(1, min(r + 1, 8 - c)):
+            if self.board[r-fields][c + fields] == "--":
+                moves.append(Move((r,c), (r-fields,c+ fields), self.board))
+            else:
+                if self.board[r-fields][c + fields][0] == enemyColor:
                     moves.append(Move((r,c), (r-fields,c+ fields), self.board))
-                else:
-                    if self.board[r-fields][c + fields][0] == 'b':
-                        moves.append(Move((r,c), (r-fields,c+ fields), self.board))
-                        break
                     break
-            # move diagonally up left
-            for fields in range(1, min(r + 1, c + 1)):
-                if self.board[r-fields][c - fields] == "--":
+                break
+        # move diagonally up left
+        for fields in range(1, min(r + 1, c + 1)):
+            if self.board[r-fields][c - fields] == "--":
+                moves.append(Move((r,c), (r-fields,c- fields), self.board))
+            else:
+                if self.board[r-fields][c - fields][0] == enemyColor:
                     moves.append(Move((r,c), (r-fields,c- fields), self.board))
-                else:
-                    if self.board[r-fields][c - fields][0] == 'b':
-                        moves.append(Move((r,c), (r-fields,c- fields), self.board))
-                        break
                     break
-            # move diagonally down right
-            for fields in range(1, min(8 - r, 8 - c)):
-                if self.board[r+fields][c + fields] == "--":
+                break
+        # move diagonally down right
+        for fields in range(1, min(8 - r, 8 - c)):
+            if self.board[r+fields][c + fields] == "--":
+                moves.append(Move((r,c), (r+fields,c+ fields), self.board))
+            else:
+                if self.board[r+fields][c + fields][0] == enemyColor:
                     moves.append(Move((r,c), (r+fields,c+ fields), self.board))
-                else:
-                    if self.board[r+fields][c + fields][0] == 'b':
-                        moves.append(Move((r,c), (r+fields,c+ fields), self.board))
-                        break
                     break
-            # move diagonally down left
-            for fields in range(1, min(8 - r, c + 1)):
-                if self.board[r+fields][c - fields] == "--":
+                break
+        # move diagonally down left
+        for fields in range(1, min(8 - r, c + 1)):
+            if self.board[r+fields][c - fields] == "--":
+                moves.append(Move((r,c), (r+fields,c- fields), self.board))
+            else:
+                if self.board[r+fields][c - fields][0] == enemyColor:
                     moves.append(Move((r,c), (r+fields,c- fields), self.board))
-                else:
-                    if self.board[r+fields][c - fields][0] == 'b':
-                        moves.append(Move((r,c), (r+fields,c- fields), self.board))
-                        break
                     break
-        else: 
-             # move diagonally up right
-            for fields in range(1, min(r + 1, 8 - c)):
-                if self.board[r-fields][c + fields] == "--":
-                    moves.append(Move((r,c), (r-fields,c+ fields), self.board))
-                else:
-                    if self.board[r-fields][c + fields][0] == 'w':
-                        moves.append(Move((r,c), (r-fields,c+ fields), self.board))
-                        break
-                    break
-            # move diagonally up left
-            for fields in range(1, min(r + 1, c + 1)):
-                if self.board[r-fields][c - fields] == "--":
-                    moves.append(Move((r,c), (r-fields,c- fields), self.board))
-                else:
-                    if self.board[r-fields][c - fields][0] == 'w':
-                        moves.append(Move((r,c), (r-fields,c- fields), self.board))
-                        break
-                    break
-            # move diagonally down right
-            for fields in range(1, min(8 - r, 8 - c)):
-                if self.board[r+fields][c + fields] == "--":
-                    moves.append(Move((r,c), (r+fields,c+ fields), self.board))
-                else:
-                    if self.board[r+fields][c + fields][0] == 'w':
-                        moves.append(Move((r,c), (r+fields,c+ fields), self.board))
-                        break
-                    break
-            # move diagonally down left
-            for fields in range(1, min(8 - r, c + 1)):
-                if self.board[r+fields][c - fields] == "--":
-                    moves.append(Move((r,c), (r+fields,c- fields), self.board))
-                else:
-                    if self.board[r+fields][c - fields][0] == 'w':
-                        moves.append(Move((r,c), (r+fields,c- fields), self.board))
-                        break
-                    break
-
+                break
+        
     # generates possible moves for Queens
     def getQueenMoves(self, r, c, moves):
         self.getBishopMoves(r, c, moves)
@@ -236,72 +170,39 @@ class GameState():
 
     # generates possible moves for Kings
     def getKingMoves(self, r, c, moves):
-        if self.whiteToMove: # whites turn
-            # move upwards            
-            if r-1>=0:
-                if self.board[r-1][c] == "--" or self.board[r-1][c][0] == 'b':
-                    moves.append(Move((r,c), (r-1,c), self.board))    
-            # move down            
-            if r+1<=7:
-                if self.board[r+1][c] == "--" or self.board[r+1][c][0] == 'b':
-                    moves.append(Move((r,c), (r+1,c), self.board))    
-            # move left            
-            if c-1>=0:
-                if self.board[r][c-1] == "--" or self.board[r][c-1][0] == 'b':
-                    moves.append(Move((r,c), (r,c-1), self.board))
-              # move right            
-            if c+1<=7:
-                if self.board[r][c+1] == "--" or self.board[r][c+1][0] == 'b':
-                    moves.append(Move((r,c), (r,c+1), self.board))
-            # move diagonally up right
-            if r-1>=0 and c+1<=7:
-                if self.board[r-1][c +1] == "--" or self.board[r-1][c +1][0] == 'b':
-                    moves.append(Move((r,c), (r-1,c+1), self.board))
-                    # move diagonally up left
-            if r-1>=0 and c-1>=0:
-                if self.board[r-1][c -1] == "--" or self.board[r-1][c -1][0] == 'b':
-                    moves.append(Move((r,c), (r-1,c-1), self.board))
-                    # move diagonally down right
-            if r+1<=7 and c+1<=7:
-                if self.board[r+1][c +1] == "--" or self.board[r+1][c +1][0] == 'b':
-                    moves.append(Move((r,c), (r+1,c+1), self.board))
-                    # move diagonally down left
-            if r+1<=7 and c-1>=0:
-                if self.board[r+1][c -1] == "--" or self.board[r+1][c -1][0] == 'b':
-                    moves.append(Move((r,c), (r+1,c-1), self.board))
-        else: # blacks turn
-               # move upwards            
-            if r-1>=0:
-                if self.board[r-1][c] == "--" or self.board[r-1][c][0] == 'w':
-                    moves.append(Move((r,c), (r-1,c), self.board))    
-            # move down            
-            if r+1<=7:
-                if self.board[r+1][c] == "--" or self.board[r+1][c][0] == 'w':
-                    moves.append(Move((r,c), (r+1,c), self.board))    
-            # move left            
-            if c-1>=0:
-                if self.board[r][c-1] == "--" or self.board[r][c-1][0] == 'w':
-                    moves.append(Move((r,c), (r,c-1), self.board))
-              # move right            
-            if c+1<=7:
-                if self.board[r][c+1] == "--" or self.board[r][c+1][0] == 'w':
-                    moves.append(Move((r,c), (r,c+1), self.board))
-            # move diagonally up right
-            if r-1>=0 and c+1<=7:
-                if self.board[r-1][c +1] == "--" or self.board[r-1][c +1][0] == 'w':
-                    moves.append(Move((r,c), (r-1,c+1), self.board))
-                    # move diagonally up left
-            if r-1>=0 and c-1>=0:
-                if self.board[r-1][c -1] == "--" or self.board[r-1][c -1][0] == 'w':
-                    moves.append(Move((r,c), (r-1,c-1), self.board))
-                    # move diagonally down right
-            if r+1<=7 and c+1<=7:
-                if self.board[r+1][c +1] == "--" or self.board[r+1][c +1][0] == 'w':
-                    moves.append(Move((r,c), (r+1,c+1), self.board))
-                    # move diagonally down left
-            if r+1<=7 and c-1>=0:
-                if self.board[r+1][c -1] == "--" or self.board[r+1][c -1][0] == 'w':
-                    moves.append(Move((r,c), (r+1,c-1), self.board))
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        # move upwards            
+        if r-1>=0:
+            if self.board[r-1][c] == "--" or self.board[r-1][c][0] == enemyColor:
+                moves.append(Move((r,c), (r-1,c), self.board))    
+        # move down            
+        if r+1<=7:
+            if self.board[r+1][c] == "--" or self.board[r+1][c][0] == enemyColor:
+                moves.append(Move((r,c), (r+1,c), self.board))    
+        # move left            
+        if c-1>=0:
+            if self.board[r][c-1] == "--" or self.board[r][c-1][0] == enemyColor:
+                moves.append(Move((r,c), (r,c-1), self.board))
+            # move right            
+        if c+1<=7:
+            if self.board[r][c+1] == "--" or self.board[r][c+1][0] == enemyColor:
+                moves.append(Move((r,c), (r,c+1), self.board))
+        # move diagonally up right
+        if r-1>=0 and c+1<=7:
+            if self.board[r-1][c +1] == "--" or self.board[r-1][c +1][0] == enemyColor:
+                moves.append(Move((r,c), (r-1,c+1), self.board))
+                # move diagonally up left
+        if r-1>=0 and c-1>=0:
+            if self.board[r-1][c -1] == "--" or self.board[r-1][c -1][0] == enemyColor:
+                moves.append(Move((r,c), (r-1,c-1), self.board))
+                # move diagonally down right
+        if r+1<=7 and c+1<=7:
+            if self.board[r+1][c +1] == "--" or self.board[r+1][c +1][0] == enemyColor:
+                moves.append(Move((r,c), (r+1,c+1), self.board))
+                # move diagonally down left
+        if r+1<=7 and c-1>=0:
+            if self.board[r+1][c -1] == "--" or self.board[r+1][c -1][0] == enemyColor:
+                moves.append(Move((r,c), (r+1,c-1), self.board))
 
 class Move():
     # dictionaries for mapping the propper notation

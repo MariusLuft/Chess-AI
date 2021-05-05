@@ -49,8 +49,10 @@ def main():
                         print(move.getChessNotation())
                         gameState.makeMove(move)
                         moveMade = True
-                    selectedSquare = ()
-                    playerClicks = []
+                        selectedSquare = ()
+                        playerClicks = []
+                    else:
+                        playerClicks = [selectedSquare]
             # key handler
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_r:
