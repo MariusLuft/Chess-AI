@@ -32,6 +32,9 @@ def main():
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            # TODO Better game ending
+            if gameState.checkMate or gameState.staleMate:
+                running = False
             # mouse handler
             if e.type == p.MOUSEBUTTONDOWN:
                 location = p.mouse.get_pos() # x,y
