@@ -56,6 +56,8 @@ def main():
                             moveMade = True
                             selectedSquare = ()
                             playerClicks = []
+                            for log in gameState.castleRightsLog:
+                                print(log.whiteKingCastle, log.whiteQueenCastle, log.blackKingCastle, log.blackQueenCastle, end = ", ")
                             # TODO see if its pawnpromotion and ask for choice
                     if not moveMade:
                         playerClicks = [selectedSquare]
