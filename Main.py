@@ -48,13 +48,16 @@ def main():
                     playerClicks.append(selectedSquare) # counts mouseclick
                 if len(playerClicks) == 2:
                     move = Engine.Move(playerClicks[0],playerClicks[1], gameState.board)
-                    if move in validMoves:
-                        print(move.getChessNotation())
-                        gameState.makeMove(move)
-                        moveMade = True
-                        selectedSquare = ()
-                        playerClicks = []
-                    else:
+                    for i in range(len(validMoves)):
+                        if move == validMoves[i]:
+                            test = gameState.possibleEnPassantSquare
+                            print(move.getChessNotation())
+                            gameState.makeMove(validMoves[i])
+                            moveMade = True
+                            selectedSquare = ()
+                            playerClicks = []
+                            # TODO see if its pawnpromotion and ask for choice
+                    if not moveMade:
                         playerClicks = [selectedSquare]
             # key handler
             elif e.type == p.KEYDOWN:
