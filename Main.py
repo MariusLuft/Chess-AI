@@ -29,37 +29,38 @@ def main():
     selectedSquare = () # tracks last move
     playerClicks = [] # count mouseclicks
     animate = True
+    gameOver = False
+    rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
+    endScreenFrameCount = 0
     while running:
         for e in p.event.get():
-            if e.type == p.QUIT:
-                running = False
-            # TODO Better game ending
-            if gameState.checkMate or gameState.staleMate:
-                running = False
-            # mouse handler
-            if e.type == p.MOUSEBUTTONDOWN:
-                location = p.mouse.get_pos() # x,y
-                col = location[0] // SQ_SIZE
-                row = location[1] // SQ_SIZE
-                if selectedSquare == (row, col):
-                    selectedSquare = () # undoes the move in progress
-                    playerClicks.pop()
-                else: 
-                    selectedSquare = (row,col)
-                    playerClicks.append(selectedSquare) # counts mouseclick
-                if len(playerClicks) == 2:
-                    move = Engine.Move(playerClicks[0],playerClicks[1], gameState.board)
-                    for i in range(len(validMoves)):
-                        if move == validMoves[i]:
-                            print(move.getChessNotation())
-                            gameState.makeMove(validMoves[i])
-                            moveMade = True
-                            animate = True
-                            selectedSquare = ()
-                            playerClicks = []
-                            # TODO see if its pawnpromotion and ask for choice
-                    if not moveMade:
-                        playerClicks = [selectedSquare]
+            if not gameOver:
+                if e.type == p.QUIT:
+                    running = False
+                # mouse handler
+                if e.type == p.MOUSEBUTTONDOWN:
+                    location = p.mouse.get_pos() # x,y
+                    col = location[0] // SQ_SIZE
+                    row = location[1] // SQ_SIZE
+                    if selectedSquare == (row, col):
+                        selectedSquare = () # undoes the move in progress
+                        playerClicks.pop()
+                    else: 
+                        selectedSquare = (row,col)
+                        playerClicks.append(selectedSquare) # counts mouseclick
+                    if len(playerClicks) == 2:
+                        move = Engine.Move(playerClicks[0],playerClicks[1], gameState.board)
+                        for i in range(len(validMoves)):
+                            if move == validMoves[i]:
+                                print(move.getChessNotation())
+                                gameState.makeMove(validMoves[i])
+                                moveMade = True
+                                animate = True
+                                selectedSquare = ()
+                                playerClicks = []
+                                # TODO see if its pawnpromotion and ask for choice
+                        if not moveMade:
+                            playerClicks = [selectedSquare]
             # key handler
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_r:
@@ -80,9 +81,30 @@ def main():
             moveMade = False
             animate = False     
 
+        drawGameState(screen, gameState, validMoves, selectedSquare)
+
+        if gameState.checkMate or gameState.staleMate:
+            endScreenFrameCount = endScreenFrameCount + 1
+            displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors)
+        
+
         clock.tick(MAX_FPS)
         p.display.flip()
-        drawGameState(screen, gameState, validMoves, selectedSquare)
+
+
+def displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors):
+    index = (endScreenFrameCount % 70) // 10 - 1
+    color = p.Color(rainbowColors[index][0],rainbowColors[index][1],rainbowColors[index][2])
+    if gameState.checkMate:
+        gameOver = True
+        if gameState.whiteToMove:
+            drawText(screen, "Black won!",color)
+        if not gameState.whiteToMove:
+            drawText(screen, "White won!",color)
+    if gameState.staleMate:
+        gameOver = True
+        drwaText(screen, "Draw!",color)
+       
 
 def highlightSquares(screen, gameState, validMoves, selectedSquare):
     if selectedSquare != ():
@@ -143,6 +165,13 @@ def animateMove(move, screen, board, clock):
         p.display.flip()
         clock.tick(60)
     # TODO highlight the last move made
+
+def drawText(screen, text, fontColor):
+    font = p.font.SysFont("Helvitca", 64, True, False)
+    textObject = font.render(text, 0, fontColor)
+    textLocation = p.Rect(0,0, WIDTH, HEIGHT).move(WIDTH/2 - textObject.get_width()/2, HEIGHT/2 - textObject.get_height()/2)
+    screen.blit(textObject, textLocation)
+
 
 
 
