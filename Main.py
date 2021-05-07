@@ -28,6 +28,7 @@ def main():
     running = True
     selectedSquare = () # tracks last move
     playerClicks = [] # count mouseclicks
+    animate = True
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
@@ -50,10 +51,10 @@ def main():
                     move = Engine.Move(playerClicks[0],playerClicks[1], gameState.board)
                     for i in range(len(validMoves)):
                         if move == validMoves[i]:
-                            test = gameState.possibleEnPassantSquare
                             print(move.getChessNotation())
                             gameState.makeMove(validMoves[i])
                             moveMade = True
+                            animate = True
                             selectedSquare = ()
                             playerClicks = []
                             # TODO see if its pawnpromotion and ask for choice
@@ -64,9 +65,14 @@ def main():
                 if e.key == p.K_r:
                     gameState.undoMove()
                     moveMade = True
+                    animate = False
         if moveMade:
+            if animate:
+                animateMove(gameState.moveLog[-1], screen, gameState.board, clock)
             validMoves = gameState.getValidMoves()
             moveMade = False
+            animate = False     
+                   
         clock.tick(MAX_FPS)
         p.display.flip()
         drawGameState(screen, gameState, validMoves, selectedSquare)
@@ -94,6 +100,7 @@ def drawGameState(screen, gameState, validMoves, selectedSquare):
     drawPieces(screen, gameState.board)
 
 def drawBoard(screen):
+    global colors
     colors = [p.Color("white"), p.Color("gray")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
@@ -106,6 +113,30 @@ def drawPieces(screen, board):
             piece = board[r][c]
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE,SQ_SIZE))
+
+def animateMove(move, screen, board, clock):
+    global colors
+    deltaRow = move.endSquare[0] - move.startSquare[0]
+    deltaCol = move.endSquare[1] - move.startSquare[1]
+    framesPerSquare = 3
+    frameCount = (abs(deltaCol) + abs(deltaRow)) * framesPerSquare
+    for frame in range(frameCount + 1):
+        r,c = (move.startSquare[0] + deltaRow  *  frame / frameCount, move.startSquare[1] + deltaCol  *  frame / frameCount)
+        drawBoard(screen)
+        drawPieces(screen, board)
+        # erase moving piece from its ending square
+        color = colors[(move.endSquare[0] + move.endSquare[1]) % 2]
+        endSquare = p.Rect(move.endSquare[1] * SQ_SIZE, move.endSquare[0] * SQ_SIZE, SQ_SIZE, SQ_SIZE)
+        p.draw.rect(screen, color, endSquare)
+        # draw captured piece onto rectangle 
+        if move.pieceCaptured != "--":
+            screen.blit(IMAGES[move.pieceCaptured], endSquare)
+        # draw moving pieces 
+        screen.blit(IMAGES[move.pieceMoved], p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+        p.display.flip()
+        clock.tick(60)
+    # TODO highlight the last move made
+
 
 
 if __name__ == "__main__":
