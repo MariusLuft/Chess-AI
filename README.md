@@ -6,4 +6,9 @@ The game determines the valid moves that can be made following the conventional 
 
 Some of these Concepts are: as little function calls and nested loops as possible, Bitmaps for representation and Alpha Beta Pruning for AI descisions. 
 
+## Controls
+
+R - Undo last move
+N - Start a new game
+
 
