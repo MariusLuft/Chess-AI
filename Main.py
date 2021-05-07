@@ -66,13 +66,20 @@ def main():
                     gameState.undoMove()
                     moveMade = True
                     animate = False
+                if e.key == p.K_n:
+                    gameState = Engine.GameState()
+                    validMoves = gameState.getValidMoves()
+                    selectedSquare = ()
+                    playerClicks = []
+                    moveMade = False
+                    animate = False
         if moveMade:
             if animate:
                 animateMove(gameState.moveLog[-1], screen, gameState.board, clock)
             validMoves = gameState.getValidMoves()
             moveMade = False
             animate = False     
-                   
+
         clock.tick(MAX_FPS)
         p.display.flip()
         drawGameState(screen, gameState, validMoves, selectedSquare)
