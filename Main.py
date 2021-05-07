@@ -56,8 +56,6 @@ def main():
                             moveMade = True
                             selectedSquare = ()
                             playerClicks = []
-                            for log in gameState.castleRightsLog:
-                                print(log.whiteKingCastle, log.whiteQueenCastle, log.blackKingCastle, log.blackQueenCastle, end = ", ")
                             # TODO see if its pawnpromotion and ask for choice
                     if not moveMade:
                         playerClicks = [selectedSquare]
@@ -71,10 +69,28 @@ def main():
             moveMade = False
         clock.tick(MAX_FPS)
         p.display.flip()
-        drawGameState(screen, gameState)
+        drawGameState(screen, gameState, validMoves, selectedSquare)
 
-def drawGameState(screen, gameState):
+def highlightSquares(screen, gameState, validMoves, selectedSquare):
+    if selectedSquare != ():
+        r,c = selectedSquare
+        if gameState.board[r][c][0] == ('w' if gameState.whiteToMove else 'b'): # is it no empty square?
+            # highlights selected square
+            s = p.Surface((SQ_SIZE,SQ_SIZE))
+            s.set_alpha(100)
+            s.fill(p.Color('blue'))
+            screen.blit(s, (c*SQ_SIZE, r*SQ_SIZE))
+            # highlights valid moves
+            s.fill(p.Color('yellow'))
+            for move in validMoves:
+                if move.startSquare[0] == r and move.startSquare[1] == c:
+                    screen.blit(s, (move.endSquare[1] * SQ_SIZE, move.endSquare[0] * SQ_SIZE))
+
+
+
+def drawGameState(screen, gameState, validMoves, selectedSquare):
     drawBoard(screen)
+    highlightSquares(screen, gameState, validMoves, selectedSquare)
     drawPieces(screen, gameState.board)
 
 def drawBoard(screen):
