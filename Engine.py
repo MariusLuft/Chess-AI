@@ -363,6 +363,10 @@ class GameState():
             if not self.squareUnderAttack(r,c-11) and not self.squareUnderAttack(r,c-22):
                 moves.append(Move((r,c), (r,c-2), self.board, isCastleMove = True))
 
+    # TODO check for stalemate when material is low
+
+    # TODO check for stalemate through move repetition
+
 
 class Move():
     # dictionaries for mapping the propper notation

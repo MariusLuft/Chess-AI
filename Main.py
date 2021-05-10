@@ -1,7 +1,7 @@
 # handles user input and displayes the current game state # 
 
 import pygame as p
-import Engine
+import Engine, ChessAI
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -32,9 +32,12 @@ def main():
     gameOver = False
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
-    while running:
+    playerOne = False # True if human, flase if AI, white
+    playerTwo = False # black
+    while running: # TODO move event processing to user interaction class
+        humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
         for e in p.event.get():
-            if not gameOver:
+            if not gameOver and humanTurn:
                 if e.type == p.QUIT:
                     running = False
                 # mouse handler
@@ -74,6 +77,14 @@ def main():
                     playerClicks = []
                     moveMade = False
                     animate = False
+
+        # AI choosing a move
+        if not gameOver and not humanTurn:
+            AIMove = ChessAI.findRandomMove(validMoves)
+            gameState.makeMove(AIMove)
+            moveMade = True
+            animate = True
+
         if moveMade:
             if animate:
                 animateMove(gameState.moveLog[-1], screen, gameState.board, clock)
@@ -84,6 +95,7 @@ def main():
         drawGameState(screen, gameState, validMoves, selectedSquare)
 
         if gameState.checkMate or gameState.staleMate:
+            gameOver = True
             endScreenFrameCount = endScreenFrameCount + 1
             displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors)
         
@@ -171,6 +183,8 @@ def drawText(screen, text, fontColor):
     textObject = font.render(text, 0, fontColor)
     textLocation = p.Rect(0,0, WIDTH, HEIGHT).move(WIDTH/2 - textObject.get_width()/2, HEIGHT/2 - textObject.get_height()/2)
     screen.blit(textObject, textLocation)
+
+# TODO add sound effects to the moves and checks
 
 
 
