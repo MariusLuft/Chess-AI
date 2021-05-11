@@ -70,6 +70,7 @@ def main():
                     gameState.undoMove()
                     moveMade = True
                     animate = False
+                    gameOver = False
                 if e.key == p.K_n:
                     gameState = Engine.GameState()
                     validMoves = gameState.getValidMoves()
@@ -77,6 +78,7 @@ def main():
                     playerClicks = []
                     moveMade = False
                     animate = False
+                    gameOver = False
 
         # AI choosing a move
         if not gameOver and not humanTurn:            

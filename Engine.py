@@ -3,15 +3,25 @@ class GameState():
     def __init__(self):
         # 8x8 List to represent board
         # each field contains of two characters: player and piece
+        # self.board = [
+        #     ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
+        #     ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
+        #     ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
+        # ]
         self.board = [
-            ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
+            ["bR","bN", "--", "bQ", "bK", "bB","--", "bR"],
             ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
+            ["--","--", "--", "--", "bN", "--","--", "--"],
+            ["--","--", "bB", "--", "--", "--","--", "--"],
             ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "wQ", "--", "--", "--","--", "--"],
             ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
-            ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
+            ["wR","wN", "wB","--" , "wK", "wB","wN", "wR"]
         ]
         self.whiteToMove = True
         self.moveLog = []
@@ -85,6 +95,8 @@ class GameState():
                 else: # queen side catling
                     self.board[move.startSquare[0]][move.endSquare[1] - 2] = self.board[move.startSquare[0]][move.endSquare[1] + 1] # copies the rook
                     self.board[move.startSquare[0]][move.endSquare[1] + 1] = "--" # removes the rook
+            self.checkMate = False
+            self.staleMate = False
 
     # possible moves without considering check
     def getPossibleMoves(self):
