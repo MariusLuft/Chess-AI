@@ -2,7 +2,6 @@ import random
 import time
 
 pieceScore = {"K": 0, "Q": 9, "R":5, "B": 3, "N":3, "P": 1}
-# piecePositionScores = {"K": kingScores, "Q": queenScores, "R":rookScores, "B": bishopScores, "N": knightScores, "P": pawnScores}
 knightScores = [(1, 2, 3, 3, 3, 3, 2, 1),
                 (2, 4, 5, 5, 5, 5, 4, 2),
                 (3, 5, 6, 6, 6, 6, 5, 3),
@@ -11,11 +10,84 @@ knightScores = [(1, 2, 3, 3, 3, 3, 2, 1),
                 (3, 5, 6, 6, 6, 6, 5, 3),
                 (2, 4, 5, 5, 5, 5, 4, 2),
                 (1, 2, 3, 3, 3, 3, 2, 1),]
-piecePositionScores = {"N": knightScores}
+kingScoresWhite = [(2, 2, 2, 1, 1, 2, 2, 2),
+                   (2, 2, 2, 1, 1, 2, 2, 2),
+                   (2, 2, 2, 1, 1, 2, 2, 2),
+                   (2, 2, 2, 1, 1, 2, 2, 2),
+                   (3, 2, 2, 1, 1, 2, 2, 3),
+                   (3, 4, 4, 4, 4, 4, 4, 3),
+                   (5, 5, 4, 4, 4, 4, 5, 5),
+                   (5, 7, 5, 4, 4, 5, 7, 5)]
+kingScoresBlack = [(5, 7, 5, 4, 4, 5, 7, 5),
+                   (5, 5, 4, 4, 4, 4, 5, 5),
+                   (3, 4, 4, 4, 4, 4, 4, 3),
+                   (3, 2, 2, 1, 1, 2, 2, 3),
+                   (2, 2, 2, 1, 1, 2, 2, 2),
+                   (2, 2, 2, 1, 1, 2, 2, 2),
+                   (2, 2, 2, 1, 1, 2, 2, 2),
+                   (2, 2, 2, 1, 1, 2, 2, 2)]
+queenScores =     [(1, 2, 2, 3, 3, 2, 2, 1),
+                   (2, 4, 5, 6, 6, 5, 4, 2),
+                   (2, 5, 7, 7, 7, 7, 5, 2),
+                   (4, 5, 7, 7, 7, 7, 5, 4),
+                   (4, 5, 7, 7, 7, 7, 5, 4),
+                   (2, 5, 7, 7, 7, 7, 5, 2),
+                   (2, 4, 5, 6, 6, 5, 4, 2),
+                   (1, 2, 2, 3, 3, 2, 2, 1)]
+rookScoresWhite = [(5, 5, 5, 5, 5, 5, 5, 5),
+                   (6, 7, 7, 7, 7, 7, 7, 6),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (3, 3, 4, 6, 6, 4, 3, 3)]
+rookScoresBlack = [(3, 3, 4, 6, 6, 4, 3, 3),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (1, 3, 3, 3, 3, 3, 3, 1),
+                   (6, 7, 7, 7, 7, 7, 7, 6),
+                   (5, 5, 5, 5, 5, 5, 5, 5)]
+bishopScoresWhite = [(1, 3, 4, 6, 6, 4, 3, 1),
+                   (2, 4, 4, 4, 4, 4, 4, 2),
+                   (2, 5, 4, 6, 6, 4, 5, 2),
+                   (2, 5, 5, 6, 6, 5, 5, 2),
+                   (2, 5, 7, 6, 6, 7, 5, 2),
+                   (2, 6, 6, 6, 6, 6, 6, 2),
+                   (2, 6, 5, 5, 5, 5, 6, 2),
+                   (5, 2, 2, 2, 2, 2, 2, 5)]
+bishopScoresBlack = [(5, 2, 2, 2, 2, 2, 2, 5),
+                   (2, 6, 5, 5, 5, 5, 6, 2),
+                   (2, 6, 6, 6, 6, 6, 6, 2),
+                   (2, 5, 7, 6, 6, 7, 5, 2),
+                   (2, 5, 5, 6, 6, 5, 5, 2),
+                   (2, 5, 4, 6, 6, 4, 5, 2),
+                   (2, 4, 4, 4, 4, 4, 4, 2),
+                   (1, 3, 4, 6, 6, 4, 3, 1)]
+pawnScoresWhite = [(3, 3, 3, 3, 3, 3, 3, 3),
+                   (7, 7, 7, 7, 7, 7, 7, 7),
+                   (3, 3, 3, 6, 6, 3, 3, 3),
+                   (3, 3, 3, 6, 6, 3, 3, 3),
+                   (3, 3, 3, 6, 6, 3, 3, 3),
+                   (2, 3, 2, 4, 4, 2, 3, 2),
+                   (4, 5, 5, 1, 1, 5, 5, 4),
+                   (3, 3, 3, 3, 3, 3, 3, 3)]
+pawnScoresBlack = [(3, 3, 3, 3, 3, 3, 3, 3),
+                   (4, 5, 5, 1, 1, 5, 5, 4),
+                   (2, 3, 2, 4, 4, 2, 3, 2),
+                   (3, 3, 3, 6, 6, 3, 3, 3),
+                   (3, 3, 3, 6, 6, 3, 3, 3),
+                   (3, 3, 3, 6, 6, 3, 3, 3),
+                   (7, 7, 7, 7, 7, 7, 7, 7),
+                   (3, 3, 3, 3, 3, 3, 3, 3)]
+piecePositionScoresWhite = {"K": kingScoresWhite, "Q": queenScores, "R":rookScoresWhite, "B": bishopScoresWhite, "N": knightScores, "P": pawnScoresWhite}
+piecePositionScoresBlack = {"K": kingScoresBlack, "Q": queenScores, "R":rookScoresBlack, "B": bishopScoresBlack, "N": knightScores, "P": pawnScoresBlack}
 CHECKMATE = 1000
 STALEMATE = 0
 DEPTH = 2
-POSITIONWHEIGHT = 0.2
+POSITIONWHEIGHT = 0.05
 
 def findRandomMove(validMoves):
     return validMoves[random.randint(0, len(validMoves) - 1)]
@@ -25,7 +97,7 @@ def findBestMove(gameState, validMoves):
     global nodesSearched
     nodesSearched = -1
     nextMove = None
-    # random.shuffle(validMoves) # variation for testing
+    random.shuffle(validMoves) # variation for testing
     start = time.time()
     findMoveMegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
     end = time.time()
@@ -98,20 +170,15 @@ def scoreBoard(gameState):
         for col in range(len(gameState.board[row])):
             square = gameState.board[row][col]
             if square != "--":
-                # piece position
+                # piece position and material value
                 piecePositionScore = 0
-                if square[1] == 'N':
-                    piecePositionScore += piecePositionScores['N'][row][col]
-                # material on the board
                 if square[0] == 'w': 
-                    score += pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
-                elif square[0] == 'b':
-                    score -= pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
-                
-
-
-    # TODO King in check
-
+                    #piecePositionScore += piecePositionScoresWhite[square[1]][row][col]
+                    score += pieceScore[square[1]] #+ piecePositionScore * POSITIONWHEIGHT                
+                else:
+                    #piecePositionScore += piecePositionScoresBlack[square[1]][row][col]
+                    score -= pieceScore[square[1]] #+ piecePositionScore * POSITIONWHEIGHT
+            # TODO King in check
     return score 
 
 # def getMaterialScore(board):

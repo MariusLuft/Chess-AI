@@ -119,7 +119,7 @@ def displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors):
             drawEndGameText(screen, "White won!",color)
     if gameState.staleMate:
         gameOver = True
-        drwaText(screen, "Draw!",color)
+        drawEndGameText(screen, "Draw!",color)
        
 
 def highlightSquares(screen, gameState, validMoves, selectedSquare):
@@ -175,7 +175,7 @@ def animateMove(move, screen, board, clock):
         p.draw.rect(screen, color, endSquare)
         # draw captured piece onto rectangle 
         if move.pieceCaptured != "--":
-            if not move.isEnPassantMove:
+            if move.isEnPassantMove:
                 enPassantRow = move.endSquare[0] + 1 if move.pieceCaptured[0] == 'b' else move.endSquare[0] - 1
                 endSquare = p.Rect(move.endSquare[1] * SQ_SIZE, enPassantRow * SQ_SIZE, SQ_SIZE, SQ_SIZE)
             screen.blit(IMAGES[move.pieceCaptured], endSquare)
