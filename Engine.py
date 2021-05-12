@@ -3,26 +3,26 @@ class GameState():
     def __init__(self):
         # 8x8 List to represent board
         # each field contains of two characters: player and piece
-        # self.board = [
-        #     ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
-        #     ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
-        #     ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
-        # ]
         self.board = [
-            ["bR","bN", "--", "bQ", "bK", "bB","--", "bR"],
+            ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
             ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
-            ["--","--", "--", "--", "bN", "--","--", "--"],
-            ["--","--", "bB", "--", "--", "--","--", "--"],
             ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "wQ", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
             ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
-            ["wR","wN", "wB","--" , "wK", "wB","wN", "wR"]
+            ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
         ]
+        # self.board = [
+        #     ["bR","bN", "--", "bQ", "bK", "bB","--", "bR"],
+        #     ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
+        #     ["--","--", "--", "--", "bN", "--","--", "--"],
+        #     ["--","--", "bB", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "wQ", "--", "wP", "--","--", "--"],
+        #     ["wP","wP", "wP", "wP", "--", "wP","wP", "wP"],
+        #     ["wR","wN", "wB","--" , "wK", "wB","wN", "wR"]
+        # ]
         self.whiteToMove = True
         self.moveLog = []
         self.moveFunctions = {'P': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getNightMoves, 'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
@@ -169,12 +169,14 @@ class GameState():
 
     # update castle rights if king or rook move
     def updateCastleRights(self, move):
+        # king moved
         if move.pieceMoved == "wK":
             self.currentCastlingRights.whiteKingCastle = False
             self.currentCastlingRights.whiteQueenCastle = False
         elif move.pieceMoved == "bK":
             self.currentCastlingRights.blackKingCastle = False
             self.currentCastlingRights.blackQueenCastle = False
+        # rook getting moved
         elif move.pieceMoved == "wR":
             if move.startSquare[0] ==7:
                 if move.startSquare[1] == 0:
@@ -187,7 +189,17 @@ class GameState():
                     self.currentCastlingRights.blackQueenCastle = False
                 elif move.startSquare[1] == 7:
                     self.currentCastlingRights.blackKingCastle = False
-        # TODO what if the rook gets captured?
+        # rook getting captured
+        elif move.pieceCaptured == "wR":
+            if move.endSquare[1] == 0:
+                self.currentCastlingRights.whiteQueenCastle = False
+            elif move.endSquare[1] == 7:
+                self.currentCastlingRights.whiteKingCastle = False
+        elif move.pieceCaptured == "bR":
+            if move.endSquare[1] == 0:
+                self.currentCastlingRights.blackQueenCastle = False
+            elif move.endSquare[1] == 7:
+                self.currentCastlingRights.blackKingCastle = False
 
             
     # generates possible moves for Pawns
@@ -387,7 +399,7 @@ class Move():
     filesToCols = {"a": 0, "b": 1, "c": 2, "d": 3,"e": 4, "f": 5,"g": 6,"h": 7}
     colsToFiles = {v: k for k,v in filesToCols.items()}
 
-    def __init__(self, startSq, endSq, board, isEnPassantMove = False, isCastleMove = False):
+    def __init__(self, startSq, endSq, board, isEnPassantMove = False, isCastleMove = False, isCheckMove = False):
         self.pieceMoved = board[startSq[0]][startSq[1]]
         self.pieceCaptured = board[endSq[0]][endSq[1]]
         self.startSquare = startSq
