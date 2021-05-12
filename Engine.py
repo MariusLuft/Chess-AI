@@ -31,6 +31,7 @@ class GameState():
         self.checkMate = False
         self.staleMate = False
         self.possibleEnPassantSquare = ()
+        self.enPassantPossibleLog = [self.possibleEnPassantSquare]
         self.currentCastlingRights = CastleRights(True, True, True, True)
         self.castleRightsLog = [ CastleRights(self.currentCastlingRights.whiteKingCastle, self.currentCastlingRights.whiteQueenCastle, self.currentCastlingRights.blackKingCastle, self.currentCastlingRights.blackQueenCastle)]
 
@@ -52,6 +53,7 @@ class GameState():
             self.possibleEnPassantSquare = ((move.startSquare[0] + move.endSquare[0]) // 2, move.startSquare[1])
         else: 
             self.possibleEnPassantSquare = ()
+        self.enPassantPossibleLog.append(self.possibleEnPassantSquare)
         # castling
         if move.isCastleMove:
             if  move.endSquare[1] - move.startSquare[1] == 2: # Kingside castling
@@ -80,10 +82,9 @@ class GameState():
             if move.isEnPassantMove:
                 self.board[move.endSquare[0]][move.endSquare[1]] = "--" # leave landing square blank
                 self.board[move.startSquare[0]][move.endSquare[1]] = move.pieceCaptured
-                self.possibleEnPassantSquare = (move.endSquare[0], move.endSquare[1])
-            # undo 2 square pawn move
-            elif move.pieceMoved[1] == 'P' and abs(move.startSquare[0] - move.endSquare[0]) == 2:
-                self.possibleEnPassantSquare = ()
+            self.enPassantPossibleLog.pop()
+            self.possibleEnPassantSquare = self.enPassantPossibleLog[-1]
+                
             # undo castling rights
             self.castleRightsLog.pop()
             self.currentCastlingRights = CastleRights(self.castleRightsLog[-1].whiteKingCastle, self.castleRightsLog[-1].whiteQueenCastle, self.castleRightsLog[-1].blackKingCastle, self.castleRightsLog[-1].blackQueenCastle)

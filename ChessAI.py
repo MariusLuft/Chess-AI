@@ -2,9 +2,20 @@ import random
 import time
 
 pieceScore = {"K": 0, "Q": 9, "R":5, "B": 3, "N":3, "P": 1}
+# piecePositionScores = {"K": kingScores, "Q": queenScores, "R":rookScores, "B": bishopScores, "N": knightScores, "P": pawnScores}
+knightScores = [(1, 2, 3, 3, 3, 3, 2, 1),
+                (2, 4, 5, 5, 5, 5, 4, 2),
+                (3, 5, 6, 6, 6, 6, 5, 3),
+                (3, 5, 6, 7, 7, 6, 5, 3),
+                (3, 5, 6, 7, 7, 6, 5, 3),
+                (3, 5, 6, 6, 6, 6, 5, 3),
+                (2, 4, 5, 5, 5, 5, 4, 2),
+                (1, 2, 3, 3, 3, 3, 2, 1),]
+piecePositionScores = {"N": knightScores}
 CHECKMATE = 1000
 STALEMATE = 0
 DEPTH = 2
+POSITIONWHEIGHT = 0.2
 
 def findRandomMove(validMoves):
     return validMoves[random.randint(0, len(validMoves) - 1)]
@@ -81,17 +92,25 @@ def scoreBoard(gameState):
             return CHECKMATE
     elif gameState.staleMate:
         return STALEMATE
-    # material on the board
+    
     score = 0
-    for row in gameState.board:
-        for square in row:
-            if square[0] == 'w': 
-                score += pieceScore[square[1]]
-            elif square[0] == 'b':
-                score -= pieceScore[square[1]]
-    # TODO King in check
+    for row in range(len(gameState.board)):
+        for col in range(len(gameState.board[row])):
+            square = gameState.board[row][col]
+            if square != "--":
+                # piece position
+                piecePositionScore = 0
+                if square[1] == 'N':
+                    piecePositionScore += piecePositionScores['N'][row][col]
+                # material on the board
+                if square[0] == 'w': 
+                    score += pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
+                elif square[0] == 'b':
+                    score -= pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
+                
 
-    # 
+
+    # TODO King in check
 
     return score 
 

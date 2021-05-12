@@ -32,8 +32,8 @@ def main():
     gameOver = False
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
-    playerOne = True # True if human, flase if AI, white
-    playerTwo = True # black
+    playerOne = False # True if human, flase if AI, white
+    playerTwo = False # black
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
         for e in p.event.get():
@@ -114,9 +114,9 @@ def displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors):
     if gameState.checkMate:
         gameOver = True
         if gameState.whiteToMove:
-            drawText(screen, "Black won!",color)
+            drawEndGameText(screen, "Black won!",color)
         if not gameState.whiteToMove:
-            drawText(screen, "White won!",color)
+            drawEndGameText(screen, "White won!",color)
     if gameState.staleMate:
         gameOver = True
         drwaText(screen, "Draw!",color)
@@ -175,6 +175,9 @@ def animateMove(move, screen, board, clock):
         p.draw.rect(screen, color, endSquare)
         # draw captured piece onto rectangle 
         if move.pieceCaptured != "--":
+            if not move.isEnPassantMove:
+                enPassantRow = move.endSquare[0] + 1 if move.pieceCaptured[0] == 'b' else move.endSquare[0] - 1
+                endSquare = p.Rect(move.endSquare[1] * SQ_SIZE, enPassantRow * SQ_SIZE, SQ_SIZE, SQ_SIZE)
             screen.blit(IMAGES[move.pieceCaptured], endSquare)
         # draw moving pieces 
         screen.blit(IMAGES[move.pieceMoved], p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
@@ -182,7 +185,7 @@ def animateMove(move, screen, board, clock):
         clock.tick(60)
     # TODO highlight the last move made
 
-def drawText(screen, text, fontColor):
+def drawEndGameText(screen, text, fontColor):
     font = p.font.SysFont("Helvitca", 64, True, False)
     textObject = font.render(text, 0, fontColor)
     textLocation = p.Rect(0,0, WIDTH, HEIGHT).move(WIDTH/2 - textObject.get_width()/2, HEIGHT/2 - textObject.get_height()/2)
