@@ -14,14 +14,14 @@ class GameState():
             ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
         ]
         # self.board = [
-        #     ["bR","bN", "--", "bQ", "bK", "bB","--", "bR"],
-        #     ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
-        #     ["--","--", "--", "--", "bN", "--","--", "--"],
-        #     ["--","--", "bB", "--", "--", "--","--", "--"],
+        #     ["bR","bN", "bB", "bQ", "bK", "--","bN", "bR"],
+        #     ["bP","bP", "bP", "bP", "--", "bP","bP", "bP"],
+        #     ["--","bB", "--", "--", "bP", "--","--", "--"],
         #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "wQ", "--", "wP", "--","--", "--"],
-        #     ["wP","wP", "wP", "wP", "--", "wP","wP", "wP"],
-        #     ["wR","wN", "wB","--" , "wK", "wB","wN", "wR"]
+        #     ["--","--", "--", "--", "wP", "--","--", "--"],
+        #     ["--","--", "--", "wP", "wB", "--","--", "--"],
+        #     ["wP","wP", "wP", "--", "--", "wP","wP", "wP"],
+        #     ["wR","wN", "--","wQ" , "wK", "wB","wN", "wR"]
         # ]
         self.whiteToMove = True
         self.moveLog = []
@@ -65,7 +65,6 @@ class GameState():
 
         self.updateCastleRights(move)
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.whiteKingCastle, self.currentCastlingRights.whiteQueenCastle, self.currentCastlingRights.blackKingCastle, self.currentCastlingRights.blackQueenCastle))
-        lastMove = move
         
 
              
@@ -127,7 +126,7 @@ class GameState():
             self.whiteToMove = not self.whiteToMove 
             self.undoMove()
         if len(moves) == 0:
-            if self.isInCheck:
+            if self.isInCheck():
                 self.checkMate = True
             else:
                 self.staleMate = True
@@ -400,7 +399,7 @@ class Move():
     filesToCols = {"a": 0, "b": 1, "c": 2, "d": 3,"e": 4, "f": 5,"g": 6,"h": 7}
     colsToFiles = {v: k for k,v in filesToCols.items()}
 
-    def __init__(self, startSq, endSq, board, isEnPassantMove = False, isCastleMove = False, isCheckMove = False):
+    def __init__(self, startSq, endSq, board, isEnPassantMove = False, isCastleMove = False, isCheckMove = False, movePriority = 0):
         self.pieceMoved = board[startSq[0]][startSq[1]]
         self.pieceCaptured = board[endSq[0]][endSq[1]]
         self.startSquare = startSq
@@ -413,6 +412,9 @@ class Move():
         if self.isEnPassantMove:
             self.pieceCaptured = "wP" if self.pieceMoved == "bP" else "bP"
         self.isCastleMove = isCastleMove
+        self.movePriority = movePriority
+        #self.deliversCheck = deliversCheck
+        #self.deliversCheckMate = deliversCheckMate
 
 
     # overriding the equals function

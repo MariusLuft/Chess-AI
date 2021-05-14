@@ -1,5 +1,6 @@
 import random
 import time
+import numpy as np
 
 pieceScore = {"K": 0, "Q": 9, "R":5, "B": 3, "N":3, "P": 1}
 knightScores = [(1, 2, 3, 3, 3, 3, 2, 1),
@@ -17,8 +18,8 @@ kingScoresWhite = [(2, 2, 2, 1, 1, 2, 2, 2),
                    (3, 2, 2, 1, 1, 2, 2, 3),
                    (3, 4, 4, 4, 4, 4, 4, 3),
                    (5, 5, 4, 4, 4, 4, 5, 5),
-                   (5, 7, 5, 4, 4, 5, 7, 5)]
-kingScoresBlack = [(5, 7, 5, 4, 4, 5, 7, 5),
+                   (5, 7, 6, 4, 4, 5, 7, 5)]
+kingScoresBlack = [(5, 7, 6, 4, 4, 5, 7, 5),
                    (5, 5, 4, 4, 4, 4, 5, 5),
                    (3, 4, 4, 4, 4, 4, 4, 3),
                    (3, 2, 2, 1, 1, 2, 2, 3),
@@ -41,8 +42,8 @@ rookScoresWhite = [(5, 5, 5, 5, 5, 5, 5, 5),
                    (1, 3, 3, 3, 3, 3, 3, 1),
                    (1, 3, 3, 3, 3, 3, 3, 1),
                    (1, 3, 3, 3, 3, 3, 3, 1),
-                   (3, 3, 4, 6, 6, 4, 3, 3)]
-rookScoresBlack = [(3, 3, 4, 6, 6, 4, 3, 3),
+                   (3, 3, 3, 6, 6, 4, 3, 3)]
+rookScoresBlack = [(3, 3, 3, 6, 6, 4, 3, 3),
                    (1, 3, 3, 3, 3, 3, 3, 1),
                    (1, 3, 3, 3, 3, 3, 3, 1),
                    (1, 3, 3, 3, 3, 3, 3, 1),
@@ -55,12 +56,12 @@ bishopScoresWhite = [(1, 3, 4, 6, 6, 4, 3, 1),
                    (2, 5, 4, 6, 6, 4, 5, 2),
                    (2, 5, 5, 6, 6, 5, 5, 2),
                    (2, 5, 7, 6, 6, 7, 5, 2),
-                   (2, 6, 6, 6, 6, 6, 6, 2),
-                   (2, 6, 5, 5, 5, 5, 6, 2),
+                   (2, 5, 6, 6, 6, 6, 5, 2),
+                   (2, 5, 5, 5, 5, 5, 5, 2),
                    (5, 2, 2, 2, 2, 2, 2, 5)]
 bishopScoresBlack = [(5, 2, 2, 2, 2, 2, 2, 5),
-                   (2, 6, 5, 5, 5, 5, 6, 2),
-                   (2, 6, 6, 6, 6, 6, 6, 2),
+                   (2, 5, 5, 5, 5, 5, 5, 2),
+                   (2, 5 , 6, 6, 6, 6, 5, 2),
                    (2, 5, 7, 6, 6, 7, 5, 2),
                    (2, 5, 5, 6, 6, 5, 5, 2),
                    (2, 5, 4, 6, 6, 4, 5, 2),
@@ -86,8 +87,14 @@ piecePositionScoresWhite = {"K": kingScoresWhite, "Q": queenScores, "R":rookScor
 piecePositionScoresBlack = {"K": kingScoresBlack, "Q": queenScores, "R":rookScoresBlack, "B": bishopScoresBlack, "N": knightScores, "P": pawnScoresBlack}
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 2
-POSITIONWHEIGHT = 0.05
+DEPTH = 3
+POSITIONWHEIGHT = 0.11
+WINNINGTRADE = 6
+EVENTRADE = 3
+LOSINGTRADE = 1
+PROMOTION = 9
+CASTLING = 4
+
 
 def findRandomMove(validMoves):
     return validMoves[random.randint(0, len(validMoves) - 1)]
@@ -97,9 +104,12 @@ def findBestMove(gameState, validMoves):
     global nodesSearched
     nodesSearched = -1
     nextMove = None
-    random.shuffle(validMoves) # variation for testing
+    # move ordering
+    validMoves = prioritizeMoves(validMoves) 
     start = time.time()
-    findMoveMegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
+    findMoveNegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
+    # findMoveMegaMax(gameState, validMoves, DEPTH, 1 if gameState.whiteToMove else -1)
+    # findMoveMinMax(gameState, validMoves, DEPTH, gameState.whiteToMove)
     end = time.time()
     print("Time spent searching: ", "{:.2f}".format(end - start), " seconds")
     print("Nodes visited: ", nodesSearched)
@@ -125,21 +135,21 @@ def findBestMove(gameState, validMoves):
 #             gameState.undoMove()
 #     return maxScore
 
-def findMoveMegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMultiplyer):
+def findMoveNegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMultiplyer):
     global nextMove
     global nodesSearched 
     nodesSearched = nodesSearched + 1
 
     if depth == 0:
         return turnMultiplyer * scoreBoard(gameState)
-
-    # TODO move ordering        
     
     maxScore = -CHECKMATE
     for move in validMoves:
             gameState.makeMove(move)
             nextMoves = gameState.getValidMoves()
-            score = -findMoveMegaMaxAlphaBeta(gameState, nextMoves, depth - 1, -beta, -alpha, -turnMultiplyer)          
+            # move ordering
+            nextMoves = prioritizeMoves(nextMoves) 
+            score = -findMoveNegaMaxAlphaBeta(gameState, nextMoves, depth - 1, -beta, -alpha, -turnMultiplyer)          
             if score > maxScore:
                 maxScore = score
                 if depth == DEPTH:
@@ -150,6 +160,39 @@ def findMoveMegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMult
             if alpha >= beta:
                 break
     return maxScore
+
+def prioritizeMoves(moves):
+    for move in moves:
+        move.movePriority = 0 # reset
+        # trade value
+        if move.pieceCaptured != "--":
+            tradeValue = (pieceScore[move.pieceCaptured[1]] - pieceScore[move.pieceMoved[1]])
+            # winning trade
+            if tradeValue > 0:
+                move.movePriority  += WINNINGTRADE
+            elif tradeValue == 0:
+            # even trade
+                move.movePriority  += EVENTRADE
+            # loosing trade
+            else:
+                move.movePriority  += LOSINGTRADE            
+        # promotions
+        if move.isPawnPromotion:
+            move.movePriority  += PROMOTION
+        # castling
+        elif move.isCastleMove:
+            move.movePriority  += CASTLING
+        # check
+        # checkmate
+        # Queen under attack?
+        # does the position improve?
+        
+    
+    moves.sort(key=lambda move: move.movePriority, reverse=True)
+    
+    return moves
+
+
 
 
 
@@ -171,15 +214,24 @@ def scoreBoard(gameState):
             square = gameState.board[row][col]
             if square != "--":
                 # piece position and material value
-                piecePositionScore = 0
-                if square[0] == 'w': 
-                    #piecePositionScore += piecePositionScoresWhite[square[1]][row][col]
-                    score += pieceScore[square[1]] #+ piecePositionScore * POSITIONWHEIGHT                
-                else:
-                    #piecePositionScore += piecePositionScoresBlack[square[1]][row][col]
-                    score -= pieceScore[square[1]] #+ piecePositionScore * POSITIONWHEIGHT
-            # TODO King in check
+                score = evaluateMaterialConsideringPosition(square, score, row, col)
+                # evaluate King Safety
+                # punish double pawns
+                # punish hanging pieces
+                # reward protected pieces
+                # reward attacked pieces
+                # preserved castle rights
     return score 
+
+def evaluateMaterialConsideringPosition(square, score, row, col):
+    piecePositionScore = 0
+    if square[0] == 'w': 
+        piecePositionScore += piecePositionScoresWhite[square[1]][row][col]
+        score += pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT                
+    else:
+        piecePositionScore += piecePositionScoresBlack[square[1]][row][col]
+        score -= pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
+    return score
 
 # def getMaterialScore(board):
 #     score = 0
@@ -215,7 +267,7 @@ def scoreBoard(gameState):
 #             elif gameState.staleMate:
 #                 score = STALEMATE
 #             else:
-#                 score = -turnMutiplyer * getMaterialScore(gameState.board) # inverted so it's the negative opponent score
+#                 score = -turnMutiplyer * scoreBoard(gameState) # inverted so it's the negative opponent score
 #             if score > opponentMaxScore:
 #                 opponentMaxScore = score 
 #             gameState.undoMove()
