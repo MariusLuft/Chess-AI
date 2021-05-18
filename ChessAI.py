@@ -87,13 +87,15 @@ piecePositionScoresWhite = {"K": kingScoresWhite, "Q": queenScores, "R":rookScor
 piecePositionScoresBlack = {"K": kingScoresBlack, "Q": queenScores, "R":rookScoresBlack, "B": bishopScoresBlack, "N": knightScores, "P": pawnScoresBlack}
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 3
+DEPTH = 2
 POSITIONWHEIGHT = 0.11
+KINGINCHECK = 0.7
 WINNINGTRADE = 6
 EVENTRADE = 3
 LOSINGTRADE = 1
 PROMOTION = 9
 CASTLING = 4
+CHECKMOVE = 5
 
 
 def findRandomMove(validMoves):
@@ -115,26 +117,6 @@ def findBestMove(gameState, validMoves):
     print("Nodes visited: ", nodesSearched)
     return nextMove
 
-
-
-# def findMoveMegaMax(gameState, validMoves, depth, turnMultiplyer):
-#     global nextMove
-#     global nodesSearched 
-#     nodesSearched = nodesSearched + 1
-#     if depth == 0:
-#         return turnMultiplyer * scoreBoard(gameState)
-#     maxScore = -CHECKMATE
-#     for move in validMoves:
-#             gameState.makeMove(move)
-#             nextMoves = gameState.getValidMoves()
-#             score = -findMoveMegaMax(gameState, nextMoves, depth - 1, -turnMultiplyer)          
-#             if score > maxScore:
-#                 maxScore = score
-#                 if depth == DEPTH:
-#                     nextMove = move
-#             gameState.undoMove()
-#     return maxScore
-
 def findMoveNegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMultiplyer):
     global nextMove
     global nodesSearched 
@@ -154,6 +136,7 @@ def findMoveNegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMult
                 maxScore = score
                 if depth == DEPTH:
                     nextMove = move
+                    print(move.getChessNotation(), score)
             gameState.undoMove()
             if maxScore > alpha:
                 alpha = maxScore
@@ -183,7 +166,9 @@ def prioritizeMoves(moves):
         elif move.isCastleMove:
             move.movePriority  += CASTLING
         # check
-        # checkmate
+        # no need to make distinction between check and checkMate here
+        if move.isCheckMove:
+            move.movePriority  += CHECKMOVE
         # Queen under attack?
         # does the position improve?
         
@@ -191,10 +176,6 @@ def prioritizeMoves(moves):
     moves.sort(key=lambda move: move.movePriority, reverse=True)
     
     return moves
-
-
-
-
 
 
 # positive score is good for white
@@ -215,12 +196,15 @@ def scoreBoard(gameState):
             if square != "--":
                 # piece position and material value
                 score = evaluateMaterialConsideringPosition(square, score, row, col)
+
                 # evaluate King Safety
                 # punish double pawns
                 # punish hanging pieces
                 # reward protected pieces
                 # reward attacked pieces
                 # preserved castle rights
+    # reward checking
+    score += evaluateKingsInCheck(gameState)
     return score 
 
 def evaluateMaterialConsideringPosition(square, score, row, col):
@@ -233,80 +217,13 @@ def evaluateMaterialConsideringPosition(square, score, row, col):
         score -= pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
     return score
 
-# def getMaterialScore(board):
-#     score = 0
-#     for row in board:
-#         for square in row:
-#             if square[0] == 'w': 
-#                 score += pieceScore[square[1]]
-#             elif square[0] == 'b':
-#                  score -= pieceScore[square[1]]
-#     return score 
+def evaluateKingsInCheck(gameState):
+    score = 0
+    if gameState.blackInCheck:
+        score +=  KINGINCHECK
+    elif gameState.whiteInCheck:
+        score +=  -KINGINCHECK
+    return score
 
-# def findBestMove(gameState, validMoves):
-#     turnMutiplyer = 1 if gameState.whiteToMove else -1
-#     opponentsMinMaxScore = CHECKMATE
-#     bestPlayerMove = None
-#     random.shuffle(validMoves) # adds move variety for testing
-#     for playerMove in validMoves:
-#         # every legal move for the player
-#         gameState.makeMove(playerMove)        
-#         opponentsMoves = gameState.getValidMoves()
-#         if gameState.checkMate:
-#             opponentMaxScore = -CHECKMATE
-#         elif gameState.staleMate:
-#             opponentMaxScore = STALEMATE
-#         else:
-#             opponentMaxScore = - CHECKMATE
-#         for opponentsMove in opponentsMoves:
-#             # finds best response from opponent
-#             gameState.makeMove(opponentsMove)
-#             gameState.getValidMoves()
-#             if gameState.checkMate:
-#                 score = CHECKMATE 
-#             elif gameState.staleMate:
-#                 score = STALEMATE
-#             else:
-#                 score = -turnMutiplyer * scoreBoard(gameState) # inverted so it's the negative opponent score
-#             if score > opponentMaxScore:
-#                 opponentMaxScore = score 
-#             gameState.undoMove()
-#         # if it has the weakest response the move is best for us
-#         if opponentMaxScore < opponentsMinMaxScore:
-#             opponentsMinMaxScore = opponentMaxScore
-#             bestPlayerMove = playerMove
-#         gameState.undoMove()
-#     return bestPlayerMove
 
-# def findMoveMinMax(gameState, validMoves, depth, whiteToMove):
-#     global nextMove
-#     global nodesSearched 
-#     nodesSearched = nodesSearched + 1
-#     if depth == 0:
-#         return scoreBoard(gameState)
-#     if gameState.whiteToMove:
-#         maxScore = -CHECKMATE
-#         for move in validMoves:
-#             gameState.makeMove(move)
-#             nextMoves = gameState.getValidMoves()
-#             score = findMoveMinMax(gameState, nextMoves, depth - 1, False)
-#             if score > maxScore:
-#                 maxScore = score
-#                 if depth == DEPTH:
-#                     nextMove = move
-#             gameState.undoMove()
-#         return maxScore
-#     else:
-#         minScore = CHECKMATE
-#         for move in validMoves:
-#             gameState.makeMove(move)
-#             nextMoves = gameState.getValidMoves()
-#             score = findMoveMinMax(gameState, nextMoves, depth - 1, True)
-#             if score < minScore:
-#                 minScore = score
-#                 if depth == DEPTH:
-#                     nextMove = move
-#             gameState.undoMove()
-#         return minScore
 
-    

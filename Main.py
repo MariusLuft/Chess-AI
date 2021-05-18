@@ -33,8 +33,8 @@ def main():
     gameOver = False
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
-    playerOne = False # True if human, flase if AI, white
-    playerTwo = True # black
+    playerOne = True # True if human, flase if AI, white
+    playerTwo = False # black
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
         for e in p.event.get():
@@ -63,6 +63,7 @@ def main():
                                 selectedSquare = ()
                                 playerClicks = []
                                 # TODO see if its pawnpromotion and ask for choice
+                                break
                         if not moveMade:
                             playerClicks = [selectedSquare]
             # key handler
