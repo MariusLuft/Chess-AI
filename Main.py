@@ -33,7 +33,7 @@ def main():
     gameOver = False
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
-    playerOne = True # True if human, flase if AI, white
+    playerOne = False # True if human, flase if AI, white
     playerTwo = False # black
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)

@@ -6,26 +6,26 @@ class GameState():
     def __init__(self):
         # 8x8 List to represent board
         # each field contains of two characters: player and piece
-        # self.board = [
-        #     ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
-        #     ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
-        #     ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
-        # ]
         self.board = [
             ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
-            ["bP","bP", "bP", "bP", "--", "bP","bP", "bP"],
+            ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
             ["--","--", "--", "--", "--", "--","--", "--"],
             ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","bP", "--"],
-            ["--","--", "--", "--", "--", "wP","--", "--"],
-            ["wP","wP", "wP", "wP", "--", "wP","wP", "wP"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
             ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
         ]
+        # self.board = [
+        #     ["bR","bN", "bB", "bQ", "bK", "--","--", "bR"],
+        #     ["bP","bP", "bP", "bP", "--", "bP","bP", "bP"],
+        #     ["--","--", "--", "--", "bP", "--","--", "--"],
+        #     ["--","--", "--", "--", "bB", "--","--", "bN"],
+        #     ["--","--", "--", "--", "--", "--","wP", "--"],
+        #     ["--","--", "--", "--", "--", "wP","wK", "--"],
+        #     ["wP","wP", "wP", "wP", "wP", "--","--", "wP"],
+        #     ["wR","wN", "wB", "wQ", "--", "wB","wN", "wR"]
+        # ]
         self.whiteToMove = True
         self.moveLog = []
         self.moveFunctions = {'P': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getNightMoves, 'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
@@ -169,24 +169,25 @@ class GameState():
                         if not (moves[i].endSquare[0], moves[i].endSquare[1]) in validSquares:
                             moves.remove(moves[i])
             else: # 2 checks -> king needs to move
-                moves = self.getKingMoves(kingRow, kingCol, moves)
+                self.getKingMoves(kingRow, kingCol, moves)
         else: # no check
             moves = self.getPossibleMoves()
             if self.whiteToMove:
                 self.getCastleMoves(self.whiteKingPosition[0], self.whiteKingPosition[1], moves)
             else:
-                self.getCastleMoves(self.blackKingPosition[0], self.blackKingPosition[1], moves)
+                self.getCastleMoves(self.blackKingPosition[0], self.blackKingPosition[1], moves)            
+
+        # check if moves deliver check to opponents king
+        for move in moves:
+            if self.moveDeliversCheck(move):
+                move.isCheckMove = True
+
         # check for end of game
         if len(moves) == 0:
             if self.inCheck:
                 self.checkMate = True
             else:
                 self.staleMate = True
-            
-        # check if moves deliver check to opponents king
-        for move in moves:
-            if self.moveDeliversCheck(move):
-                move.isCheckMove = True
         return moves
 
 

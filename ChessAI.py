@@ -1,3 +1,4 @@
+from Engine import GameState
 import random
 import time
 import numpy as np
@@ -87,9 +88,10 @@ piecePositionScoresWhite = {"K": kingScoresWhite, "Q": queenScores, "R":rookScor
 piecePositionScoresBlack = {"K": kingScoresBlack, "Q": queenScores, "R":rookScoresBlack, "B": bishopScoresBlack, "N": knightScores, "P": pawnScoresBlack}
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 2
+DEPTH = 3
 POSITIONWHEIGHT = 0.11
 KINGINCHECK = 0.7
+MOVINGTWICEPENALTY = -0.3
 WINNINGTRADE = 6
 EVENTRADE = 3
 LOSINGTRADE = 1
@@ -110,8 +112,6 @@ def findBestMove(gameState, validMoves):
     validMoves = prioritizeMoves(validMoves) 
     start = time.time()
     findMoveNegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
-    # findMoveMegaMax(gameState, validMoves, DEPTH, 1 if gameState.whiteToMove else -1)
-    # findMoveMinMax(gameState, validMoves, DEPTH, gameState.whiteToMove)
     end = time.time()
     print("Time spent searching: ", "{:.2f}".format(end - start), " seconds")
     print("Nodes visited: ", nodesSearched)
@@ -205,6 +205,7 @@ def scoreBoard(gameState):
                 # preserved castle rights
     # reward checking
     score += evaluateKingsInCheck(gameState)
+    score += evaluateSamePieceMovingTwice(gameState)
     return score 
 
 def evaluateMaterialConsideringPosition(square, score, row, col):
@@ -224,6 +225,11 @@ def evaluateKingsInCheck(gameState):
     elif gameState.whiteInCheck:
         score +=  -KINGINCHECK
     return score
+
+def evaluateSamePieceMovingTwice(GameState):
+    if (GameState.moveLog[-1].pieceMoved == GameState.moveLog[-2].pieceMoved) and (GameState.moveLog[-1].startSquare == GameState.moveLog[-2].endSquare):
+        return MOVINGTWICEPENALTY
+    return 0
 
 
 
