@@ -133,8 +133,11 @@ def findMoveNegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMult
     if depth == 0:
         return turnMultiplyer * scoreBoard(gameState)
     
-    maxScore = -CHECKMATE
-    for move in validMoves:
+    maxScore = -CHECKMATE 
+    if gameState.staleMate:  
+        maxScore = -STALEMATE
+    
+    for move in validMoves: 
             gameState.makeMove(move)
             nextMoves = gameState.getValidMoves()
             # move ordering
@@ -258,7 +261,7 @@ def evaluateMaterialConsideringPosition(square, score, row, col):
     #             score += MOVINGTWICEPENALTY * GameState.lateGameWeight
     #         elif GameState.moveLog[-1].pieceMoved[0] == 'b':
     #             score += -MOVINGTWICEPENALTY * GameState.lateGameWeight
-    return score
+    # return score
 
 # def evaluateQueenUnderAttack(gameState):
 #     score = 0
