@@ -21,11 +21,13 @@ def main():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
-    moveSound = p.mixer.Sound('sounds/move.wav')
+    moveSound = p.mixer.Sound('sounds/move.wav')    
+    winSound = p.mixer.Sound('sounds/win.wav')   
     gameState = Engine.GameState()
     moveMade = False
     lastMove = None
     validMoves = gameState.getValidMoves()
+    gameOverIsSet = False
     #load images only once
     loadImages()
     running = True
@@ -36,7 +38,7 @@ def main():
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
     playerOne = True # True if human, flase if AI, white
-    playerTwo = False # black
+    playerTwo = True # black
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
         for e in p.event.get():
@@ -107,9 +109,12 @@ def main():
         drawGameState(screen, gameState, validMoves, selectedSquare, lastMove)
 
         if gameState.checkMate or gameState.staleMate:
-            gameOver = True
+            if not gameOverIsSet:
+                gameOver = True            
+                winSound.play()
             endScreenFrameCount = endScreenFrameCount + 1
             displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors)
+            gameOverIsSet = True
         
 
         clock.tick(MAX_FPS)
