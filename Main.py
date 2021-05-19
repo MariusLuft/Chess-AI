@@ -21,6 +21,7 @@ def main():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
+    moveSound = p.mixer.Sound('sounds/move.wav')
     gameState = Engine.GameState()
     moveMade = False
     validMoves = gameState.getValidMoves()
@@ -33,7 +34,7 @@ def main():
     gameOver = False
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
-    playerOne = False # True if human, flase if AI, white
+    playerOne = True # True if human, flase if AI, white
     playerTwo = False # black
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
@@ -92,8 +93,11 @@ def main():
             animate = True
 
         if moveMade:
+            moveSound.play()
             if animate:
-                animateMove(gameState.moveLog[-1], screen, gameState.board, clock)
+                animateMove(gameState.moveLog[-1], screen, gameState.board, clock)            
+            if gameState.lateGameWeight >= 0.05:
+                gameState.lateGameWeight -= 0.05
             validMoves = gameState.getValidMoves()
             moveMade = False
             animate = False     

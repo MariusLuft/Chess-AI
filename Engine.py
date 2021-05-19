@@ -1,5 +1,6 @@
 # storing information about the state of the chess game and determening the valid moves # 
 from typing import no_type_check_decorator
+import numpy as np
 
 
 class GameState(): 
@@ -31,38 +32,58 @@ class GameState():
         self.moveFunctions = {'P': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getNightMoves, 'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
         self.whiteKingPosition = (7,4)
         self.blackKingPosition = (0,4)
-        self.whiteQueenPosition = (7,3)
-        self.blackQueenPosition = (0,3)
+        # self.whiteQueenPosition = (7,3)
+        # self.blackQueenPosition = (0,3)
         self.checkMate = False
         self.staleMate = False
         self.inCheck = False
-        self.whiteInCheck = False
-        self.blackInCheck = False
+        # self.whiteInCheck = False
+        # self.blackInCheck = False
+        # self.whiteQueenUnderAttack = False
+        # self.blackQueenUnderAttack = False
         self.pins = []
         self.checks = []
         self.possibleEnPassantSquare = ()
         self.enPassantPossibleLog = [self.possibleEnPassantSquare]
         self.currentCastlingRights = CastleRights(True, True, True, True)
         self.castleRightsLog = [ CastleRights(self.currentCastlingRights.whiteKingCastle, self.currentCastlingRights.whiteQueenCastle, self.currentCastlingRights.blackKingCastle, self.currentCastlingRights.blackQueenCastle)]
+        self.lateGameWeight = 1
+        # self.lastPieceMovedWhite = None
+        # self.lastPieceMovedBlack = None
+        # self.lastMovedPiecesWhite = []
+        # self.lastMovedPiecesBlack = []
 
     # moves pieces on board except casteling, en-passant and pawn capture
     def makeMove(self, move):
         # reset checks as makeMove must break check to be called
-        self.blackInCheck = False
-        self.whiteInCheck = False
+        # self.blackInCheck = False
+        # self.whiteInCheck = False
+        # self.whiteQueenUnderAttack = False
+        # self.blackQueenUnderAttack = False
         # makes the move
         self.board[move.startSquare[0]][move.startSquare[1]] = "--"
         self.board[move.endSquare[0]][move.endSquare[1]] = move.pieceMoved
         self.moveLog.append(move) # log to be able to undo moves        
+        # if self.whiteToMove:
+        #     self.lastMovedPiecesWhite.append((move.endSquare))
+        # else:
+        #     self.lastMovedPiecesBlack.append((move.endSquare))
         # checks opponents king
-        if move.isCheckMove:
-            if move.pieceMoved[0] == 'w':
-                self.blackInCheck = True
-            elif move.pieceMoved[0] == 'b': 
-                self.whiteInCheck = True
+        # if move.isCheckMove:
+        #     if move.pieceMoved[0] == 'w':
+        #         self.blackInCheck = True
+        #     elif move.pieceMoved[0] == 'b': 
+        #         self.whiteInCheck = True
+        # if move.attacksQueen:
+        #     if move.pieceMoved[0] == 'w':
+        #         self.blackQueenUnderAttack = False
+        #     elif move.pieceMoved[0] == 'b': 
+        #         self.whiteQueenUnderAttack = False
         self.whiteToMove = not self.whiteToMove # players take turns        
         if move.pieceMoved == "wK" or move.pieceMoved == "bK": # TODO make more efficient
             self.updateKingPosition(move)
+        if move.pieceMoved == "wQ" or move.pieceMoved == "bQ": 
+            self.updateQueenPosition(move)
         # pawn promotion
         if move.isPawnPromotion:
             self.board[move.endSquare[0]][move.endSquare[1]] = move.pieceMoved[0] + 'Q'
@@ -96,6 +117,12 @@ class GameState():
             self.whiteToMove = not self.whiteToMove
             if move.pieceMoved == "wK" or move.pieceMoved == "bK":
                 self.reverseKingPosition(move)
+            # if self.whiteToMove:
+            #     self.lastMovedPiecesWhite.pop()
+            # else:
+            #     self.lastMovedPiecesBlack.pop()
+            # if move.pieceMoved == "wQ" or move.pieceMoved == "bQ":
+            #     self.reverseQueenPosition(move)
             # undo en passant
             if move.isEnPassantMove:
                 self.board[move.endSquare[0]][move.endSquare[1]] = "--" # leave landing square blank
@@ -118,11 +145,16 @@ class GameState():
             self.staleMate = False
             # undo check status
             # checks opponents king
-            if move.isCheckMove:
-                if move.pieceMoved[0] == 'w':
-                    self.blackInCheck = False
-                elif move.pieceMoved[0] == 'b': 
-                    self.whiteInCheck = False
+            # if move.isCheckMove:
+            #     if move.pieceMoved[0] == 'w':
+            #         self.blackInCheck = False
+            #     elif move.pieceMoved[0] == 'b': 
+            #         self.whiteInCheck = False
+            # if move.attacksQueen:
+            #     if move.pieceMoved[0] == 'w':
+            #         self.blackQueenUnderAttack = False
+            #     elif move.pieceMoved[0] == 'b': 
+            #         self.whiteQueenUnderAttack = False
 
     # possible moves without considering check
     def getPossibleMoves(self):
@@ -178,9 +210,11 @@ class GameState():
                 self.getCastleMoves(self.blackKingPosition[0], self.blackKingPosition[1], moves)            
 
         # check if moves deliver check to opponents king
-        for move in moves:
-            if self.moveDeliversCheck(move):
-                move.isCheckMove = True
+        # for move in moves:
+        #     if self.moveDeliversCheck(move):
+        #         move.isCheckMove = True
+        #     if self.moveAttacksQueen(move):
+        #         move.attacksQueen = True
 
         # check for end of game
         if len(moves) == 0:
@@ -300,11 +334,23 @@ class GameState():
         elif move.pieceMoved == "bK":
             self.blackKingPosition = (move.endSquare[0], move.endSquare[1])
 
+    def updateQueenPosition(self, move):
+        if move.pieceMoved == "wQ":
+            self.whiteQueenPosition = (move.endSquare[0], move.endSquare[1])
+        elif move.pieceMoved == "bQ":
+            self.blackQueenPosition = (move.endSquare[0], move.endSquare[1])
+
     def reverseKingPosition(self, move):
         if move.pieceMoved == "wK":
             self.whiteKingPosition = (move.startSquare[0], move.startSquare[1])
         if move.pieceMoved == "bK":
             self.blackKingPosition = (move.startSquare[0], move.startSquare[1])
+
+    def reverseQueenPosition(self, move):
+        if move.pieceMoved == "wQ":
+            self.whiteQueenPosition = (move.startSquare[0], move.startSquare[1])
+        if move.pieceMoved == "bQ":
+            self.blackQueenPosition = (move.startSquare[0], move.startSquare[1])
 
     # update castle rights if king or rook move
     def updateCastleRights(self, move):
@@ -537,6 +583,20 @@ class GameState():
         self.undoMove()
         return False
 
+    def moveAttacksQueen(self, move):
+        self.makeMove(move)
+        #check for a check
+        if self.whiteToMove:
+            if self.squareUnderAttack(self.whiteQueenPosition[0], self.whiteQueenPosition[1]):            
+                    self.undoMove()
+                    return True
+        elif not self.whiteToMove:
+            if self.squareUnderAttack(self.blackQueenPosition[0], self.blackQueenPosition[1]):            
+                    self.undoMove()
+                    return True
+        self.undoMove()
+        return False
+
 
 
 class Move():
@@ -546,7 +606,7 @@ class Move():
     filesToCols = {"a": 0, "b": 1, "c": 2, "d": 3,"e": 4, "f": 5,"g": 6,"h": 7}
     colsToFiles = {v: k for k,v in filesToCols.items()}
 
-    def __init__(self, startSq, endSq, board, isEnPassantMove = False, isCastleMove = False, isCheckMove = False, movePriority = 0):
+    def __init__(self, startSq, endSq, board, isEnPassantMove = False, isCastleMove = False, isCheckMove = False, attacksQueen = False, movePriority = 0):
         self.pieceMoved = board[startSq[0]][startSq[1]]
         self.pieceCaptured = board[endSq[0]][endSq[1]]
         self.startSquare = startSq
@@ -561,6 +621,7 @@ class Move():
         self.isCastleMove = isCastleMove
         self.movePriority = movePriority
         self.isCheckMove = isCheckMove
+        self.attacksQueen = attacksQueen
 
 
     # overriding the equals function

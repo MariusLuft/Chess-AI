@@ -2,6 +2,7 @@ from Engine import GameState
 import random
 import time
 import numpy as np
+from operator import attrgetter
 
 pieceScore = {"K": 0, "Q": 9, "R":5, "B": 3, "N":3, "P": 1}
 knightScores = [(1, 2, 3, 3, 3, 3, 2, 1),
@@ -86,18 +87,25 @@ pawnScoresBlack = [(3, 3, 3, 3, 3, 3, 3, 3),
                    (3, 3, 3, 3, 3, 3, 3, 3)]
 piecePositionScoresWhite = {"K": kingScoresWhite, "Q": queenScores, "R":rookScoresWhite, "B": bishopScoresWhite, "N": knightScores, "P": pawnScoresWhite}
 piecePositionScoresBlack = {"K": kingScoresBlack, "Q": queenScores, "R":rookScoresBlack, "B": bishopScoresBlack, "N": knightScores, "P": pawnScoresBlack}
+# number of moves the AI calculates
+DEPTH = 4
+# evaluation values
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 3
-POSITIONWHEIGHT = 0.11
-KINGINCHECK = 0.7
-MOVINGTWICEPENALTY = -0.3
+POSITIONWHEIGHT = 0.1
+# KINGINCHECK = 0.5
+# QUEENUNDERATTACK = 0.2
+# MOVINGTWICEPENALTY = -600
+EARLYQUEENMOVEPENALTY = -0.7
+# ordering values
 WINNINGTRADE = 6
 EVENTRADE = 3
 LOSINGTRADE = 1
 PROMOTION = 9
 CASTLING = 4
-CHECKMOVE = 5
+# CHECKMOVE = 5
+# ATTACKSQUEEN = 3
+# GOODPOSITION = 1
 
 
 def findRandomMove(validMoves):
@@ -109,7 +117,7 @@ def findBestMove(gameState, validMoves):
     nodesSearched = -1
     nextMove = None
     # move ordering
-    validMoves = prioritizeMoves(validMoves) 
+    validMoves = prioritizeMoves(validMoves, gameState) 
     start = time.time()
     findMoveNegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
     end = time.time()
@@ -130,7 +138,7 @@ def findMoveNegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMult
             gameState.makeMove(move)
             nextMoves = gameState.getValidMoves()
             # move ordering
-            nextMoves = prioritizeMoves(nextMoves) 
+            nextMoves = prioritizeMoves(nextMoves, gameState) 
             score = -findMoveNegaMaxAlphaBeta(gameState, nextMoves, depth - 1, -beta, -alpha, -turnMultiplyer)          
             if score > maxScore:
                 maxScore = score
@@ -144,7 +152,7 @@ def findMoveNegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMult
                 break
     return maxScore
 
-def prioritizeMoves(moves):
+def prioritizeMoves(moves,gameState):
     for move in moves:
         move.movePriority = 0 # reset
         # trade value
@@ -167,13 +175,14 @@ def prioritizeMoves(moves):
             move.movePriority  += CASTLING
         # check
         # no need to make distinction between check and checkMate here
-        if move.isCheckMove:
-            move.movePriority  += CHECKMOVE
-        # Queen under attack?
-        # does the position improve?
-        
+        # if move.isCheckMove:
+        #     move.movePriority  += CHECKMOVE
+        # # Queen under attack?
+        # if move.attacksQueen:
+        #     move.movePriority  += ATTACKSQUEEN
     
     moves.sort(key=lambda move: move.movePriority, reverse=True)
+    # moves.sort(key=attrgetter('movePriority'), reverse=True)
     
     return moves
 
@@ -203,10 +212,16 @@ def scoreBoard(gameState):
                 # reward protected pieces
                 # reward attacked pieces
                 # preserved castle rights
-    # reward checking
-    score += evaluateKingsInCheck(gameState)
-    score += evaluateSamePieceMovingTwice(gameState)
+    # # reward checking
+    # score += evaluateKingsInCheck(gameState)
+    # # rewards attacking the queen
+    # score += evaluateQueenUnderAttack(gameState)
+    # # punishes slow development
+    # score += evaluateSamePieceMovingTwice(gameState)
+    # # punishes early queen movement
+    score += evaluateEarlyQueenPosition(gameState)
     return score 
+ 
 
 def evaluateMaterialConsideringPosition(square, score, row, col):
     piecePositionScore = 0
@@ -218,18 +233,48 @@ def evaluateMaterialConsideringPosition(square, score, row, col):
         score -= pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
     return score
 
-def evaluateKingsInCheck(gameState):
-    score = 0
-    if gameState.blackInCheck:
-        score +=  KINGINCHECK
-    elif gameState.whiteInCheck:
-        score +=  -KINGINCHECK
+# def evaluateKingsInCheck(gameState):
+#     score = 0
+#     if gameState.blackInCheck:
+#         score +=  KINGINCHECK
+#     elif gameState.whiteInCheck:
+#         score +=  -KINGINCHECK
+#     return score
+
+# def evaluateSamePieceMovingTwice(GameState):
+#     score = 0
+#     # if len(GameState.lastMovedPiecesWhite) > 1:
+#     #     if GameState.lastMovedPiecesWhite 
+#     if len(GameState.lastMovedPiecesWhite) > 1:
+#         if GameState.board[GameState.lastMovedPiecesWhite[-2][0]][GameState.lastMovedPiecesWhite[-2][1]] == "--":
+#             score += MOVINGTWICEPENALTY * GameState.lateGameWeight
+#     if len(GameState.lastMovedPiecesBlack) > 1:
+#         if GameState.board[GameState.lastMovedPiecesBlack[-2][0]][GameState.lastMovedPiecesBlack[-2][1]] == "--":
+#             score += -MOVINGTWICEPENALTY * GameState.lateGameWeight
+
+    # if len(GameState.moveLog) > 2:
+    #     if (GameState.moveLog[-1].pieceMoved == GameState.moveLog[-3].pieceMoved) and (GameState.moveLog[-1].startSquare == GameState.moveLog[-3].endSquare):
+    #         if GameState.moveLog[-1].pieceMoved[0] == 'w':
+    #             score += MOVINGTWICEPENALTY * GameState.lateGameWeight
+    #         elif GameState.moveLog[-1].pieceMoved[0] == 'b':
+    #             score += -MOVINGTWICEPENALTY * GameState.lateGameWeight
     return score
 
-def evaluateSamePieceMovingTwice(GameState):
-    if (GameState.moveLog[-1].pieceMoved == GameState.moveLog[-2].pieceMoved) and (GameState.moveLog[-1].startSquare == GameState.moveLog[-2].endSquare):
-        return MOVINGTWICEPENALTY
-    return 0
+# def evaluateQueenUnderAttack(gameState):
+#     score = 0
+#     if gameState.blackQueenUnderAttack:
+#         score +=  QUEENUNDERATTACK
+#     elif gameState.whiteQueenUnderAttack:
+#         score +=  -QUEENUNDERATTACK
+#     return score
+
+def evaluateEarlyQueenPosition(GameState):
+    score = 0
+    if GameState.board[7][3] != "wQ":
+        score = EARLYQUEENMOVEPENALTY * GameState.lateGameWeight
+    if GameState.board[0][3] != "bQ":
+        score = -EARLYQUEENMOVEPENALTY * GameState.lateGameWeight
+    return score
 
 
 
