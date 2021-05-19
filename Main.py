@@ -24,6 +24,7 @@ def main():
     moveSound = p.mixer.Sound('sounds/move.wav')
     gameState = Engine.GameState()
     moveMade = False
+    lastMove = None
     validMoves = gameState.getValidMoves()
     #load images only once
     loadImages()
@@ -101,8 +102,9 @@ def main():
             validMoves = gameState.getValidMoves()
             moveMade = False
             animate = False     
+            lastMove = gameState.moveLog[-1]
 
-        drawGameState(screen, gameState, validMoves, selectedSquare)
+        drawGameState(screen, gameState, validMoves, selectedSquare, lastMove)
 
         if gameState.checkMate or gameState.staleMate:
             gameOver = True
@@ -143,11 +145,18 @@ def highlightSquares(screen, gameState, validMoves, selectedSquare):
                 if move.startSquare[0] == r and move.startSquare[1] == c:
                     screen.blit(s, (move.endSquare[1] * SQ_SIZE, move.endSquare[0] * SQ_SIZE))
 
+def highlightLastMove(screen, gameState, lastMove):
+    if len(gameState.moveLog) > 0:
+        s = p.Surface((SQ_SIZE,SQ_SIZE))
+        s.set_alpha(100)
+        s.fill(p.Color('orange'))
+        screen.blit(s, (lastMove.endSquare[1] * SQ_SIZE, lastMove.endSquare[0] * SQ_SIZE))
 
 
-def drawGameState(screen, gameState, validMoves, selectedSquare):
+def drawGameState(screen, gameState, validMoves, selectedSquare, lastMove):
     drawBoard(screen)
     highlightSquares(screen, gameState, validMoves, selectedSquare)
+    highlightLastMove(screen, gameState, lastMove)
     drawPieces(screen, gameState.board)
 
 def drawBoard(screen):

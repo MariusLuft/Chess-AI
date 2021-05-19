@@ -219,7 +219,7 @@ def scoreBoard(gameState):
     # # punishes slow development
     # score += evaluateSamePieceMovingTwice(gameState)
     # # punishes early queen movement
-    score += evaluateEarlyQueenPosition(gameState)
+    # score += evaluateEarlyQueenPosition(gameState)
     return score 
  
 
