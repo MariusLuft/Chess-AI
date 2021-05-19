@@ -3,6 +3,7 @@ import random
 import time
 import numpy as np
 from operator import attrgetter
+import math
 
 pieceScore = {"K": 0, "Q": 9, "R":5, "B": 3, "N":3, "P": 1}
 knightScores = [(1, 2, 3, 3, 3, 3, 2, 1),
@@ -88,7 +89,7 @@ pawnScoresBlack = [(3, 3, 3, 3, 3, 3, 3, 3),
 piecePositionScoresWhite = {"K": kingScoresWhite, "Q": queenScores, "R":rookScoresWhite, "B": bishopScoresWhite, "N": knightScores, "P": pawnScoresWhite}
 piecePositionScoresBlack = {"K": kingScoresBlack, "Q": queenScores, "R":rookScoresBlack, "B": bishopScoresBlack, "N": knightScores, "P": pawnScoresBlack}
 # number of moves the AI calculates
-DEPTH = 4
+DEPTH = 6
 # evaluation values
 CHECKMATE = 1000
 STALEMATE = 0
@@ -116,46 +117,66 @@ def findBestMove(gameState, validMoves):
     global nodesSearched
     nodesSearched = -1
     nextMove = None
-    # move ordering
-    validMoves = prioritizeMoves(validMoves, gameState) 
     start = time.time()
-    findMoveNegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
+    # findMoveNegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
+    findMoveNegaMaxAlphaBeta(gameState, DEPTH, -math.inf, math.inf, 1 if gameState.whiteToMove else -1)
     end = time.time()
     print("Time spent searching: ", "{:.2f}".format(end - start), " seconds")
     print("Nodes visited: ", nodesSearched)
     return nextMove
 
-def findMoveNegaMaxAlphaBeta(gameState, validMoves, depth, alpha, beta, turnMultiplyer):
+def findMoveNegaMaxAlphaBeta(gameState, depth, alpha, beta, turnMultiplyer):
+
+    # value: stores highest score of child generation
+    # alpha: 
     global nextMove
     global nodesSearched 
     nodesSearched = nodesSearched + 1
+    
+    # get children moves
+    childNodes = gameState.getValidMoves()
 
-    if depth == 0:
-        return turnMultiplyer * scoreBoard(gameState)
+    # reaches end and return score
+    if depth == 0 or len(childNodes) == 0:
+        return turnMultiplyer * (scoreBoard(gameState) + depth)
+
+    # move ordering
+    childNodes = prioritizeMoves(childNodes) 
+
+    # first set to minimum
+    value = -math.inf
+    maxValue = -math.inf
     
-    maxScore = -CHECKMATE 
-    if gameState.staleMate:  
-        maxScore = -STALEMATE
-    
-    for move in validMoves: 
-            gameState.makeMove(move)
-            nextMoves = gameState.getValidMoves()
-            # move ordering
-            nextMoves = prioritizeMoves(nextMoves, gameState) 
-            score = -findMoveNegaMaxAlphaBeta(gameState, nextMoves, depth - 1, -beta, -alpha, -turnMultiplyer)          
-            if score > maxScore:
-                maxScore = score
-                if depth == DEPTH:
-                    nextMove = move
-                    print(move.getChessNotation(), score)
+    # loops through possible moves
+    for child in childNodes: 
+
+            # make the move
+            gameState.makeMove(child)
+            
+            # next generation
+            value = max(value, -findMoveNegaMaxAlphaBeta(gameState, depth - 1, -beta, -alpha, -turnMultiplyer))                       
+
+            # original move
+            if depth == DEPTH:
+                # best of the original moves
+                if maxValue < value:
+                    maxValue = value
+                    nextMove = child
+                    #print(child.getChessNotation(), value)
+
+            # unmake move 
             gameState.undoMove()
-            if maxScore > alpha:
-                alpha = maxScore
-            if alpha >= beta:
-                break
-    return maxScore
 
-def prioritizeMoves(moves,gameState):
+            # increase alpha
+            alpha = max(alpha, value)
+
+            # cut off
+            if alpha >= beta:
+                break                       
+
+    return value
+
+def prioritizeMoves(moves):
     for move in moves:
         move.movePriority = 0 # reset
         # trade value
@@ -195,7 +216,7 @@ def scoreBoard(gameState):
     # win and draw
     if gameState.checkMate:
         if gameState.whiteToMove:
-            return - CHECKMATE
+            return -CHECKMATE
         else:
             return CHECKMATE
     elif gameState.staleMate:
@@ -222,7 +243,7 @@ def scoreBoard(gameState):
     # # punishes slow development
     # score += evaluateSamePieceMovingTwice(gameState)
     # # punishes early queen movement
-    # score += evaluateEarlyQueenPosition(gameState)
+    score += evaluateEarlyQueenPosition(gameState)
     return score 
  
 

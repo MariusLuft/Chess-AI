@@ -2,7 +2,6 @@
 
 import pygame as p
 import Engine, ChessAI
-import numpy 
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -38,7 +37,7 @@ def main():
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
     playerOne = True # True if human, flase if AI, white
-    playerTwo = True # black
+    playerTwo = False # black
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
         for e in p.event.get():
