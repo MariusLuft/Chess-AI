@@ -2,21 +2,20 @@
 from typing import no_type_check_decorator
 import numpy as np
 
-
-class GameState(): 
+class GameState():
     def __init__(self):
         # 8x8 List to represent board
         # each field contains of two characters: player and piece
-        # self.board = [
-        #     ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
-        #     ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["--","--", "--", "--", "--", "--","--", "--"],
-        #     ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
-        #     ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
-        # ]
+        self.board = [
+            ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
+            ["bP","bP", "bP", "bP", "bP", "bP","bP", "bP"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["--","--", "--", "--", "--", "--","--", "--"],
+            ["wP","wP", "wP", "wP", "wP", "wP","wP", "wP"],
+            ["wR","wN", "wB", "wQ", "wK", "wB","wN", "wR"]
+        ]
         # self.board = [
         #     ["bR","bN", "bB", "--", "bK", "bB","bN", "bR"],
         #     ["bP","bP", "bP", "bP", "--", "bP","bP", "bP"],
@@ -27,23 +26,33 @@ class GameState():
         #     ["wP","wP", "wP", "wP", "wQ", "wP","wP", "wP"],
         #     ["wR","wN", "wB", "--", "wK", "wB","wN", "wR"]
         # ]
-        self.board = [
-            ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "wK", "--", "--","--", "--"],
-            ["--","--", "--", "--", "wP", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","--", "--"],
-            ["--","--", "--", "--", "--", "--","bK", "--"],
-            ["--","--", "--", "--", "--", "--","--", "bQ"]
-        ]
+        # self.board = [
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "wP", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","bQ", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "bK","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "wK"]
+        # ]
+        # self.board = [
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "bP", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","wQ", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "--"],
+        #     ["--","--", "--", "--", "--", "wK","--", "--"],
+        #     ["--","--", "--", "--", "--", "--","--", "bK"]
+        # ]
         self.whiteToMove = True
         self.moveLog = []
         self.moveFunctions = {'P': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getNightMoves, 'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
-        # self.whiteKingPosition = (7,4)
-        # self.blackKingPosition = (0,4)
-        self.whiteKingPosition = (1,3)
-        self.blackKingPosition = (6,6)
+        self.whiteKingPosition = (7,4)
+        self.blackKingPosition = (0,4)
+        # self.whiteKingPosition = (7,7)
+        # self.blackKingPosition = (6,5)
         # self.whiteQueenPosition = (7,3)
         # self.blackQueenPosition = (0,3)
         self.checkMate = False
@@ -57,14 +66,16 @@ class GameState():
         self.checks = []
         self.possibleEnPassantSquare = ()
         self.enPassantPossibleLog = [self.possibleEnPassantSquare]
-        #self.currentCastlingRights = CastleRights(True, True, True, True)
-        self.currentCastlingRights = CastleRights(False, False, False, False)
+        self.currentCastlingRights = CastleRights(True, True, True, True)
+        #self.currentCastlingRights = CastleRights(False, False, False, False)
         self.castleRightsLog = [ CastleRights(self.currentCastlingRights.whiteKingCastle, self.currentCastlingRights.whiteQueenCastle, self.currentCastlingRights.blackKingCastle, self.currentCastlingRights.blackQueenCastle)]
+        self.earlyGameWeight = 1
         self.lateGameWeight = 1
         # self.lastPieceMovedWhite = None
         # self.lastPieceMovedBlack = None
         # self.lastMovedPiecesWhite = []
         # self.lastMovedPiecesBlack = []
+        self.gameBalance = 0
 
     # moves pieces on board except casteling, en-passant and pawn capture
     def makeMove(self, move):
@@ -95,8 +106,8 @@ class GameState():
         self.whiteToMove = not self.whiteToMove # players take turns        
         if move.pieceMoved == "wK" or move.pieceMoved == "bK": # TODO make more efficient
             self.updateKingPosition(move)
-        if move.pieceMoved == "wQ" or move.pieceMoved == "bQ": 
-            self.updateQueenPosition(move)
+        # if move.pieceMoved == "wQ" or move.pieceMoved == "bQ": 
+        #     self.updateQueenPosition(move)
         # pawn promotion
         if move.isPawnPromotion:
             self.board[move.endSquare[0]][move.endSquare[1]] = move.pieceMoved[0] + 'Q'
@@ -118,7 +129,6 @@ class GameState():
                 self.board[move.startSquare[0]][move.endSquare[1] - 2] = "--" # removes the rook
         self.updateCastleRights(move)
         self.castleRightsLog.append(CastleRights(self.currentCastlingRights.whiteKingCastle, self.currentCastlingRights.whiteQueenCastle, self.currentCastlingRights.blackKingCastle, self.currentCastlingRights.blackQueenCastle))
-        
 
              
 

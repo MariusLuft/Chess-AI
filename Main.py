@@ -2,6 +2,7 @@
 
 import pygame as p
 import Engine, ChessAI
+from multiprocessing import Process, Queue
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -36,8 +37,11 @@ def main():
     gameOver = False
     rainbowColors = [(153,0,153), (111,0,255), (0,0,255), (0,204,0), (255,255,0),  (255,128,0),  (255,0,0)]
     endScreenFrameCount = 0
-    playerOne = True # True if human, flase if AI, white
-    playerTwo = False # black
+    playerOne = False # True if human, flase if AI, white
+    playerTwo = True # black
+    AIThinking = False
+    moveFinderProcess = None
+
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
         for e in p.event.get():
@@ -71,11 +75,11 @@ def main():
                             playerClicks = [selectedSquare]
             # key handler
             if e.type == p.KEYDOWN:
-                if e.key == p.K_r:
-                    gameState.undoMove()
-                    moveMade = True
-                    animate = False
-                    gameOver = False
+                # if e.key == p.K_r:
+                #     gameState.undoMove()
+                #     moveMade = True
+                #     animate = False
+                #     gameOver = False
                 if e.key == p.K_n:
                     gameState = Engine.GameState()
                     validMoves = gameState.getValidMoves()
@@ -87,19 +91,29 @@ def main():
 
         # AI choosing a move
         if not gameOver and not humanTurn:            
-            AIMove = ChessAI.findBestMove(gameState, validMoves)
-            if AIMove is None:
-                AIMove = ChessAI.findRandomMove(validMoves)
-            gameState.makeMove(AIMove)
-            moveMade = True
-            animate = True
+            if not AIThinking:
+                AIThinking = True
+                print("Thinking...")
+                returnQueue = Queue() # passes data between threads
+                moveFinderProcess = Process(target=ChessAI.findBestMove, args=(gameState, validMoves, returnQueue))
+                moveFinderProcess.start() # calls find best move asynchronally
+
+            if not moveFinderProcess.is_alive():
+                print("Done thinking")
+                AIMove = returnQueue.get()
+                if AIMove is None:
+                    AIMove = ChessAI.findRandomMove(validMoves)
+                gameState.makeMove(AIMove)
+                moveMade = True
+                animate = True
+                AIThinking = False
 
         if moveMade:
             moveSound.play()
             if animate:
                 animateMove(gameState.moveLog[-1], screen, gameState.board, clock)            
-            if gameState.lateGameWeight >= 0.05:
-                gameState.lateGameWeight -= 0.05
+            if gameState.earlyGameWeight >= 0.05:
+                gameState.earlyGameWeight -= 0.05
             validMoves = gameState.getValidMoves()
             moveMade = False
             animate = False     

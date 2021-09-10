@@ -89,7 +89,7 @@ pawnScoresBlack = [(3, 3, 3, 3, 3, 3, 3, 3),
 piecePositionScoresWhite = {"K": kingScoresWhite, "Q": queenScores, "R":rookScoresWhite, "B": bishopScoresWhite, "N": knightScores, "P": pawnScoresWhite}
 piecePositionScoresBlack = {"K": kingScoresBlack, "Q": queenScores, "R":rookScoresBlack, "B": bishopScoresBlack, "N": knightScores, "P": pawnScoresBlack}
 # number of moves the AI calculates
-DEPTH = 6
+DEPTH = 4
 # evaluation values
 CHECKMATE = 1000
 STALEMATE = 0
@@ -112,7 +112,7 @@ CASTLING = 4
 def findRandomMove(validMoves):
     return validMoves[random.randint(0, len(validMoves) - 1)]
 
-def findBestMove(gameState, validMoves):
+def findBestMove(gameState, validMoves, returnQueue):
     global nextMove
     global nodesSearched
     nodesSearched = -1
@@ -123,12 +123,11 @@ def findBestMove(gameState, validMoves):
     end = time.time()
     print("Time spent searching: ", "{:.2f}".format(end - start), " seconds")
     print("Nodes visited: ", nodesSearched)
-    return nextMove
+    returnQueue.put(nextMove)
 
 def findMoveNegaMaxAlphaBeta(gameState, depth, alpha, beta, turnMultiplyer):
 
     # value: stores highest score of child generation
-    # alpha: 
     global nextMove
     global nodesSearched 
     nodesSearched = nodesSearched + 1
@@ -138,13 +137,16 @@ def findMoveNegaMaxAlphaBeta(gameState, depth, alpha, beta, turnMultiplyer):
 
     # reaches end and return score
     if depth == 0 or len(childNodes) == 0:
-        return turnMultiplyer * (scoreBoard(gameState) + depth)
+        if gameState.whiteToMove:
+            return turnMultiplyer * scoreBoard(gameState) + depth
+        else:
+            return turnMultiplyer * scoreBoard(gameState) - depth
+        
 
     # move ordering
     childNodes = prioritizeMoves(childNodes) 
 
     # first set to minimum
-    value = -math.inf
     maxValue = -math.inf
     
     # loops through possible moves
@@ -154,27 +156,31 @@ def findMoveNegaMaxAlphaBeta(gameState, depth, alpha, beta, turnMultiplyer):
             gameState.makeMove(child)
             
             # next generation
-            value = max(value, -findMoveNegaMaxAlphaBeta(gameState, depth - 1, -beta, -alpha, -turnMultiplyer))                       
+            value = -findMoveNegaMaxAlphaBeta(gameState, depth - 1, -beta, -alpha, -turnMultiplyer)                      
 
-            # original move
             if depth == DEPTH:
-                # best of the original moves
-                if maxValue < value:
-                    maxValue = value
+                print("Original move evaluation:", child.getChessNotation(), value)
+
+            if maxValue < value:
+                maxValue = value
+                # original move
+                if depth == DEPTH:                   
+                    # best of the original moves                
                     nextMove = child
-                    #print(child.getChessNotation(), value)
+                    print("New best move was found:", child.getChessNotation(), value)
+                    
 
             # unmake move 
             gameState.undoMove()
 
             # increase alpha
-            alpha = max(alpha, value)
+            alpha = max(alpha, maxValue)
 
             # cut off
             if alpha >= beta:
                 break                       
 
-    return value
+    return maxValue
 
 def prioritizeMoves(moves):
     for move in moves:
@@ -218,6 +224,7 @@ def scoreBoard(gameState):
         if gameState.whiteToMove:
             return -CHECKMATE
         else:
+            #print("White is fucked.", CHECKMATE)
             return CHECKMATE
     elif gameState.staleMate:
         return STALEMATE
@@ -244,6 +251,9 @@ def scoreBoard(gameState):
     # score += evaluateSamePieceMovingTwice(gameState)
     # # punishes early queen movement
     score += evaluateEarlyQueenPosition(gameState)
+    # reward king chasing enemy king in lategame
+    # scoreSoFar = score
+    # score += evaluateLateKingPosition(gameState, scoreSoFar)
     return score 
  
 
@@ -256,6 +266,39 @@ def evaluateMaterialConsideringPosition(square, score, row, col):
         piecePositionScore += piecePositionScoresBlack[square[1]][row][col]
         score -= pieceScore[square[1]] + piecePositionScore * POSITIONWHEIGHT
     return score
+
+def evaluateLateKingPosition(gameState, scoreSoFar):
+    score = 0
+
+    # kings distance to the center
+    backKingRow = gameState.blackKingPosition[0]
+    blackKingCol = gameState.blackKingPosition[1]
+    whiteKingRow = gameState.whiteKingPosition[0]
+    whiteKingCol = gameState.whiteKingPosition[1]
+
+    blackKingDstToCenterRow = max(3 - backKingRow, backKingRow - 4)
+    blackKingDstToCenterCol = max(3 - blackKingCol, blackKingCol - 4)
+    blackKingDstToCenter = blackKingDstToCenterRow + blackKingDstToCenterCol
+
+    whiteKingDstToCenterRow = max(3 - whiteKingRow, whiteKingRow - 4)
+    whiteKingDstToCenterCol = max(3 - whiteKingCol, whiteKingCol - 4)
+    whiteKingDstToCenter = whiteKingDstToCenterRow + whiteKingDstToCenterCol
+
+    score = blackKingDstToCenter - whiteKingDstToCenter 
+
+    # kings distance from each other
+    if scoreSoFar > 0: # white is winning
+        distanceBetweenKingsRow = abs(backKingRow - whiteKingRow)
+        distanceBetweenKingsCol = abs(blackKingCol - whiteKingCol)
+        distanceBetweenKings = distanceBetweenKingsRow + distanceBetweenKingsCol
+        score += 15 - distanceBetweenKings
+    elif scoreSoFar < 0: # black is winning
+        distanceBetweenKingsRow = abs(backKingRow - whiteKingRow)
+        distanceBetweenKingsCol = abs(blackKingCol - whiteKingCol)
+        distanceBetweenKings = distanceBetweenKingsRow + distanceBetweenKingsCol
+        score += distanceBetweenKings - 15
+
+    return score * gameState.lateGameWeight
 
 # def evaluateKingsInCheck(gameState):
 #     score = 0
@@ -271,17 +314,17 @@ def evaluateMaterialConsideringPosition(square, score, row, col):
 #     #     if GameState.lastMovedPiecesWhite 
 #     if len(GameState.lastMovedPiecesWhite) > 1:
 #         if GameState.board[GameState.lastMovedPiecesWhite[-2][0]][GameState.lastMovedPiecesWhite[-2][1]] == "--":
-#             score += MOVINGTWICEPENALTY * GameState.lateGameWeight
+#             score += MOVINGTWICEPENALTY * GameState.earlyGameWeight
 #     if len(GameState.lastMovedPiecesBlack) > 1:
 #         if GameState.board[GameState.lastMovedPiecesBlack[-2][0]][GameState.lastMovedPiecesBlack[-2][1]] == "--":
-#             score += -MOVINGTWICEPENALTY * GameState.lateGameWeight
+#             score += -MOVINGTWICEPENALTY * GameState.earlyGameWeight
 
     # if len(GameState.moveLog) > 2:
     #     if (GameState.moveLog[-1].pieceMoved == GameState.moveLog[-3].pieceMoved) and (GameState.moveLog[-1].startSquare == GameState.moveLog[-3].endSquare):
     #         if GameState.moveLog[-1].pieceMoved[0] == 'w':
-    #             score += MOVINGTWICEPENALTY * GameState.lateGameWeight
+    #             score += MOVINGTWICEPENALTY * GameState.earlyGameWeight
     #         elif GameState.moveLog[-1].pieceMoved[0] == 'b':
-    #             score += -MOVINGTWICEPENALTY * GameState.lateGameWeight
+    #             score += -MOVINGTWICEPENALTY * GameState.earlyGameWeight
     # return score
 
 # def evaluateQueenUnderAttack(gameState):
@@ -295,9 +338,9 @@ def evaluateMaterialConsideringPosition(square, score, row, col):
 def evaluateEarlyQueenPosition(GameState):
     score = 0
     if GameState.board[7][3] != "wQ":
-        score = EARLYQUEENMOVEPENALTY * GameState.lateGameWeight
+        score = EARLYQUEENMOVEPENALTY * GameState.earlyGameWeight
     if GameState.board[0][3] != "bQ":
-        score = -EARLYQUEENMOVEPENALTY * GameState.lateGameWeight
+        score = -EARLYQUEENMOVEPENALTY * GameState.earlyGameWeight
     return score
 
 
