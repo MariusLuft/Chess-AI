@@ -118,7 +118,6 @@ def findBestMove(gameState, validMoves, returnQueue):
     nodesSearched = -1
     nextMove = None
     start = time.time()
-    # findMoveNegaMaxAlphaBeta(gameState, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gameState.whiteToMove else -1)
     findMoveNegaMaxAlphaBeta(gameState, DEPTH, -math.inf, math.inf, 1 if gameState.whiteToMove else -1)
     end = time.time()
     print("Time spent searching: ", "{:.2f}".format(end - start), " seconds")
@@ -158,16 +157,12 @@ def findMoveNegaMaxAlphaBeta(gameState, depth, alpha, beta, turnMultiplyer):
             # next generation
             value = -findMoveNegaMaxAlphaBeta(gameState, depth - 1, -beta, -alpha, -turnMultiplyer)                      
 
-            if depth == DEPTH:
-                print("Original move evaluation:", child.getChessNotation(), value)
-
             if maxValue < value:
                 maxValue = value
                 # original move
                 if depth == DEPTH:                   
                     # best of the original moves                
                     nextMove = child
-                    print("New best move was found:", child.getChessNotation(), value)
                     
 
             # unmake move 
@@ -203,16 +198,8 @@ def prioritizeMoves(moves):
         # castling
         elif move.isCastleMove:
             move.movePriority  += CASTLING
-        # check
-        # no need to make distinction between check and checkMate here
-        # if move.isCheckMove:
-        #     move.movePriority  += CHECKMOVE
-        # # Queen under attack?
-        # if move.attacksQueen:
-        #     move.movePriority  += ATTACKSQUEEN
     
     moves.sort(key=lambda move: move.movePriority, reverse=True)
-    # moves.sort(key=attrgetter('movePriority'), reverse=True)
     
     return moves
 
@@ -224,7 +211,6 @@ def scoreBoard(gameState):
         if gameState.whiteToMove:
             return -CHECKMATE
         else:
-            #print("White is fucked.", CHECKMATE)
             return CHECKMATE
     elif gameState.staleMate:
         return STALEMATE
@@ -237,23 +223,9 @@ def scoreBoard(gameState):
                 # piece position and material value
                 score = evaluateMaterialConsideringPosition(square, score, row, col)
 
-                # evaluate King Safety
-                # punish double pawns
-                # punish hanging pieces
-                # reward protected pieces
-                # reward attacked pieces
-                # preserved castle rights
-    # # reward checking
-    # score += evaluateKingsInCheck(gameState)
-    # # rewards attacking the queen
-    # score += evaluateQueenUnderAttack(gameState)
-    # # punishes slow development
-    # score += evaluateSamePieceMovingTwice(gameState)
     # # punishes early queen movement
     score += evaluateEarlyQueenPosition(gameState)
-    # reward king chasing enemy king in lategame
-    # scoreSoFar = score
-    # score += evaluateLateKingPosition(gameState, scoreSoFar)
+
     return score 
  
 
@@ -300,40 +272,6 @@ def evaluateLateKingPosition(gameState, scoreSoFar):
 
     return score * gameState.lateGameWeight
 
-# def evaluateKingsInCheck(gameState):
-#     score = 0
-#     if gameState.blackInCheck:
-#         score +=  KINGINCHECK
-#     elif gameState.whiteInCheck:
-#         score +=  -KINGINCHECK
-#     return score
-
-# def evaluateSamePieceMovingTwice(GameState):
-#     score = 0
-#     # if len(GameState.lastMovedPiecesWhite) > 1:
-#     #     if GameState.lastMovedPiecesWhite 
-#     if len(GameState.lastMovedPiecesWhite) > 1:
-#         if GameState.board[GameState.lastMovedPiecesWhite[-2][0]][GameState.lastMovedPiecesWhite[-2][1]] == "--":
-#             score += MOVINGTWICEPENALTY * GameState.earlyGameWeight
-#     if len(GameState.lastMovedPiecesBlack) > 1:
-#         if GameState.board[GameState.lastMovedPiecesBlack[-2][0]][GameState.lastMovedPiecesBlack[-2][1]] == "--":
-#             score += -MOVINGTWICEPENALTY * GameState.earlyGameWeight
-
-    # if len(GameState.moveLog) > 2:
-    #     if (GameState.moveLog[-1].pieceMoved == GameState.moveLog[-3].pieceMoved) and (GameState.moveLog[-1].startSquare == GameState.moveLog[-3].endSquare):
-    #         if GameState.moveLog[-1].pieceMoved[0] == 'w':
-    #             score += MOVINGTWICEPENALTY * GameState.earlyGameWeight
-    #         elif GameState.moveLog[-1].pieceMoved[0] == 'b':
-    #             score += -MOVINGTWICEPENALTY * GameState.earlyGameWeight
-    # return score
-
-# def evaluateQueenUnderAttack(gameState):
-#     score = 0
-#     if gameState.blackQueenUnderAttack:
-#         score +=  QUEENUNDERATTACK
-#     elif gameState.whiteQueenUnderAttack:
-#         score +=  -QUEENUNDERATTACK
-#     return score
 
 def evaluateEarlyQueenPosition(GameState):
     score = 0
