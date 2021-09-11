@@ -1,12 +1,17 @@
 # handles user input and displayes the current game state # 
 
+import time
 import pygame as p
 import Engine, ChessAI
+#from ChessTimer import ChessTimer
 from multiprocessing import Process, Queue
+import datetime
 
-WIDTH = HEIGHT = 512
+BOARD_WIDTH = BOARD_HEIGHT = 512
+TIME_PANEL_HEIGHT = 100
+TIME_PANEL_WIDTH = BOARD_WIDTH
 DIMENSION = 8
-SQ_SIZE = HEIGHT // DIMENSION
+SQ_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
 
@@ -18,7 +23,7 @@ def loadImages():
         
 def main():
     p.init()
-    screen = p.display.set_mode((WIDTH, HEIGHT))
+    screen = p.display.set_mode((BOARD_WIDTH, BOARD_HEIGHT + TIME_PANEL_HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     moveSound = p.mixer.Sound('sounds/move.wav')    
@@ -39,13 +44,17 @@ def main():
     endScreenFrameCount = 0
     playerOne = False # True if human, flase if AI, white
     playerTwo = True # black
+    timePlayer1 = timePlayer2 = 300
     AIThinking = False
     moveFinderProcess = None
+    oldTicks = 0 
+
 
     while running: # TODO move event processing to user interaction class
         humanTurn = (gameState.whiteToMove and playerOne) or (not gameState.whiteToMove and playerTwo)
         for e in p.event.get():
             if not gameOver and humanTurn:
+                #timePlayer1.startTimer()
                 if e.type == p.QUIT:
                     running = False
                 # mouse handler
@@ -73,6 +82,7 @@ def main():
                                 break
                         if not moveMade:
                             playerClicks = [selectedSquare]
+           
             # key handler
             if e.type == p.KEYDOWN:
                 # if e.key == p.K_r:
@@ -89,24 +99,27 @@ def main():
                     animate = False
                     gameOver = False
 
+        if humanTurn:
+            timePlayer2, oldTicks = countTimeForPlayer(timePlayer2, oldTicks)
+
         # AI choosing a move
         if not gameOver and not humanTurn:            
             if not AIThinking:
                 AIThinking = True
-                print("Thinking...")
-                returnQueue = Queue() # passes data between threads
-                moveFinderProcess = Process(target=ChessAI.findBestMove, args=(gameState, validMoves, returnQueue))
+                returnQueueBestMove = Queue() # passes data between threads
+                moveFinderProcess = Process(target=ChessAI.findBestMove, args=(gameState, validMoves, returnQueueBestMove))
                 moveFinderProcess.start() # calls find best move asynchronally
 
             if not moveFinderProcess.is_alive():
                 print("Done thinking")
-                AIMove = returnQueue.get()
+                AIMove = returnQueueBestMove.get()
                 if AIMove is None:
                     AIMove = ChessAI.findRandomMove(validMoves)
                 gameState.makeMove(AIMove)
                 moveMade = True
                 animate = True
                 AIThinking = False
+            timePlayer1, oldTicks = countTimeForPlayer(timePlayer1, oldTicks)
 
         if moveMade:
             moveSound.play()
@@ -119,14 +132,14 @@ def main():
             animate = False     
             lastMove = gameState.moveLog[-1]
 
-        drawGameState(screen, gameState, validMoves, selectedSquare, lastMove)
+        drawGameState(screen, gameState, validMoves, selectedSquare, lastMove, timePlayer1, timePlayer2)
 
-        if gameState.checkMate or gameState.staleMate:
+        if gameState.checkMate or gameState.staleMate or timePlayer1 <= 0 or timePlayer2 <= 0: 
             if not gameOverIsSet:
                 gameOver = True            
                 winSound.play()
             endScreenFrameCount = endScreenFrameCount + 1
-            displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors)
+            displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors, timePlayer1, timePlayer2) 
             gameOverIsSet = True
         
 
@@ -134,7 +147,7 @@ def main():
         p.display.flip()
 
 
-def displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors):
+def displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors, timePlayer1, timePlayer2): 
     index = (endScreenFrameCount % 70) // 10 - 1
     color = p.Color(rainbowColors[index][0],rainbowColors[index][1],rainbowColors[index][2])
     if gameState.checkMate:
@@ -143,9 +156,15 @@ def displayGameOverText(screen, gameState, endScreenFrameCount,rainbowColors):
             drawEndGameText(screen, "Black won!",color)
         if not gameState.whiteToMove:
             drawEndGameText(screen, "White won!",color)
-    if gameState.staleMate:
+    elif gameState.staleMate:
         gameOver = True
         drawEndGameText(screen, "Draw!",color)
+    elif timePlayer1 <= 0:
+        gameOver = True
+        drawEndGameText(screen, "Black won on time!",color)
+    elif timePlayer2 <= 0:
+        gameOver = True
+        drawEndGameText(screen, "White won on time!",color)
        
 
 def highlightSquares(screen, gameState, validMoves, selectedSquare):
@@ -171,11 +190,12 @@ def highlightLastMove(screen, gameState, lastMove):
         screen.blit(s, (lastMove.endSquare[1] * SQ_SIZE, lastMove.endSquare[0] * SQ_SIZE))
 
 
-def drawGameState(screen, gameState, validMoves, selectedSquare, lastMove):
+def drawGameState(screen, gameState, validMoves, selectedSquare, lastMove, timePlayer1, timePlayer2): 
     drawBoard(screen)
     highlightSquares(screen, gameState, validMoves, selectedSquare)
     highlightLastMove(screen, gameState, lastMove)
     drawPieces(screen, gameState.board)
+    drawTimeBoard(screen, timePlayer1, timePlayer2)
 
 def drawBoard(screen):
     global colors
@@ -216,15 +236,37 @@ def animateMove(move, screen, board, clock):
         screen.blit(IMAGES[move.pieceMoved], p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
         p.display.flip()
         clock.tick(60)
-    # TODO highlight the last move made
 
 def drawEndGameText(screen, text, fontColor):
     font = p.font.SysFont("Helvitca", 64, True, False)
     textObject = font.render(text, 0, fontColor)
-    textLocation = p.Rect(0,0, WIDTH, HEIGHT).move(WIDTH/2 - textObject.get_width()/2, HEIGHT/2 - textObject.get_height()/2)
+    textLocation = p.Rect(0,0, BOARD_WIDTH, BOARD_HEIGHT).move(BOARD_WIDTH/2 - textObject.get_width()/2, BOARD_HEIGHT/2 - textObject.get_height()/2)
     screen.blit(textObject, textLocation)
 
-# TODO add sound effects to the moves and checks
+def drawTimeBoard(screen, timePlayer1, timePlayer2): 
+    timeRect = p.Rect(0, BOARD_HEIGHT, TIME_PANEL_WIDTH, TIME_PANEL_HEIGHT)
+    p.draw.rect(screen, p.Color("black"), timeRect)
+    font = p.font.SysFont("Helvitca", 32, True, False)
+    stringTimePlayer2 = str(datetime.timedelta(seconds=timePlayer2))
+    stringTimePlayer1 = str(datetime.timedelta(seconds=timePlayer1))
+    text = "Human:   " + stringTimePlayer2 + "   AI:   " + stringTimePlayer1
+    # text ="Human: 5:00      AI: 5:00"
+    textObject = font.render(text, 0, p.Color('gray'))
+    textLocation = p.Rect(50, BOARD_HEIGHT + 30, TIME_PANEL_WIDTH, TIME_PANEL_HEIGHT)
+    screen.blit(textObject, textLocation)
+
+def countTimeForPlayer(timePlayer, oldTicks):
+    # frame count since game started
+    current_ticks= p.time.get_ticks()        
+    if current_ticks - oldTicks >= 1000 and timePlayer > 0:
+        timePlayer -= 1
+        oldTicks = current_ticks
+    return timePlayer, oldTicks
+
+
+
+
+
 
 
 

@@ -75,7 +75,6 @@ class GameState():
         # self.lastPieceMovedBlack = None
         # self.lastMovedPiecesWhite = []
         # self.lastMovedPiecesBlack = []
-        self.gameBalance = 0
 
     # moves pieces on board except casteling, en-passant and pawn capture
     def makeMove(self, move):
