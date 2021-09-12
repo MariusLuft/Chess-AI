@@ -16,6 +16,8 @@ N - Start a new game
 
 The Pygame library was used to display the game. 
 
+![ChessAI](https://user-images.githubusercontent.com/50135757/132984649-34ddf0e4-6a29-45ca-a28e-b015d21ea65f.PNG)
+
 To represent the chess board a two dimensional String array was used. This is not the optimal choice in terms of performance but it is intuative and easy to understand. 
 
             ["bR","bN", "bB", "bQ", "bK", "bB","bN", "bR"],
@@ -31,6 +33,8 @@ To represent the chess board a two dimensional String array was used. This is no
 Each turn the game determines the valid moves that can be made following the conventional chess rules. This requires the calculation of all possible moves as well as the consideration of possible checks. 
 
 The AI is using multiprocessing to perform its tasks paralelly. To find good moves it evaluates the value of the pieces that each player has, as well as their position. The best move then gets choosen using a thechnique called NegaMax-Algorythm. This calculates future positions by assuming that the player will always choose the maximum advantage for himself and the opponent will always to minimize that. To increase efficiency a technique called alpha beta pruning was used which ignores scenarios that aren't relevant. Lastly move ordering was used to make the AI evaluate prommising moves first which brought another big boost of performance. The AI looks 4 Moves into the future which with all of the above mentioned improvements takes 5 seconds on average.
+
+To round up the project move animation, sound effects, last move highlighting, square highlighting and an end screen have been added. 
 
 
 
