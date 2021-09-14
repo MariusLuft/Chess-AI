@@ -1,6 +1,6 @@
 # ChessAI
 For this project I programmed chess from scratch and made a rule based AI to play against. The goal was not to beat Magnus Carlson but to have a decent result and learn python.
-The AI was supposed to avoid nonsensical moves. At the end of the day it even got kind of strong and hard to beat. The Youtube tutorial from Eddie Sharick was used as an orientation. 
+The AI was supposed to avoid nonsensical moves. At the end of the day it even got kind of strong and hard to beat. The Youtube tutorial from Eddie Sharick was used as an orientation. https://www.youtube.com/watch?v=EnYui0e73Rs&list=PLBwF487qi8MGU81nDGaeNE1EnNEPYWKY_
 
 ## How to get started
 
